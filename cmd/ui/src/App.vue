@@ -1,50 +1,45 @@
 <script setup>
 import { ref } from 'vue'
-import { Monitor, InfoFilled } from '@element-plus/icons-vue'
+import { HomeFilled, Document, InfoFilled, Setting } from '@element-plus/icons-vue'
 import StatusView from './views/StatusView.vue'
 import AboutView from './views/AboutView.vue'
 
-const page = ref('status')
+const page = ref('home')
 </script>
 
 <template>
-  <el-container class="shell">
-    <el-aside width="220px" class="aside">
-      <div class="brand">
-        <div class="logo-mark">壹</div>
-        <div>
-          <div class="logo">壹课管家</div>
-          <div class="sub">OneClassMesh Agent</div>
-        </div>
-      </div>
-      <el-menu class="menu" :default-active="page" @select="(k) => (page = k)">
-        <el-menu-item index="status">
-          <el-icon><Monitor /></el-icon>
-          <span>状态仪表</span>
-        </el-menu-item>
-        <el-menu-item index="about">
-          <el-icon><InfoFilled /></el-icon>
-          <span>关于</span>
-        </el-menu-item>
-      </el-menu>
-      <div class="aside-foot">
-        <span class="dot ok"></span>
-        <span>protocol v0.1</span>
-      </div>
-    </el-aside>
+  <div class="rail">
+    <div class="logo-mark">壹</div>
 
-    <el-main class="main">
-      <StatusView v-if="page === 'status'" />
-      <AboutView v-else />
-    </el-main>
-  </el-container>
+    <div class="nav">
+      <div class="nav-item" :class="{ active: page === 'home' }" @click="page = 'home'" title="首页">
+        <el-icon :size="20"><HomeFilled /></el-icon>
+      </div>
+      <div class="nav-item disabled" title="日志(UI-M1)">
+        <el-icon :size="20"><Document /></el-icon>
+      </div>
+      <div class="nav-item" :class="{ active: page === 'about' }" @click="page = 'about'" title="关于">
+        <el-icon :size="20"><InfoFilled /></el-icon>
+      </div>
+    </div>
+
+    <div class="rail-bottom">
+      <div class="nav-item disabled" title="设置(UI-M1)">
+        <el-icon :size="20"><Setting /></el-icon>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <StatusView v-if="page === 'home'" />
+    <AboutView v-else />
+  </div>
 </template>
 
 <style>
 :root {
   --bg: #101216;
   --panel: #171a21;
-  --panel-2: #1d222c;
   --line: #262b36;
   --text: #e6e9f0;
   --muted: #8b93a7;
@@ -61,99 +56,91 @@ body {
   color: var(--text);
   font-family: 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
 }
 html.dark {
   color-scheme: dark;
 }
 #app {
-  height: 100%;
-}
-.shell {
+  display: flex;
   height: 100vh;
-  padding-top: 40px; /* titlebar overlay height */
+  padding-top: 40px; /* native titlebar overlay */
+  box-sizing: border-box;
 }
-.aside {
-  background: var(--panel);
+
+/* icon rail */
+.rail {
+  width: 64px;
+  flex: none;
+  background: #0d1015;
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-}
-.brand {
-  display: flex;
-  gap: 10px;
   align-items: center;
-  padding: 16px;
+  padding: 12px 0;
 }
 .logo-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
   display: grid;
   place-items: center;
+  font-size: 17px;
   font-weight: 700;
   color: #fff;
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  margin-bottom: 22px;
+  cursor: default;
+  user-select: none;
 }
-.logo {
-  font-size: 16px;
-  font-weight: 600;
-}
-.sub {
-  font-size: 11px;
-  color: var(--muted);
-  letter-spacing: 0.3px;
-}
-.menu {
-  border-right: none;
-  background: transparent;
-  padding: 4px 8px;
-}
-.menu .el-menu-item {
-  border-radius: 8px;
-  margin: 2px 0;
-  color: var(--muted);
-  height: 40px;
-}
-.menu .el-menu-item.is-active {
-  background: linear-gradient(90deg, rgba(79, 124, 255, 0.18), rgba(34, 211, 238, 0.08));
-  color: var(--text);
-}
-.menu .el-menu-item:hover {
-  background: var(--panel-2);
-}
-.aside-foot {
-  margin-top: auto;
-  padding: 12px 16px;
-  font-size: 11px;
-  color: var(--muted);
+.nav {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 6px;
 }
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.nav-item {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
-.dot.ok {
-  background: var(--ok);
-  box-shadow: 0 0 6px var(--ok);
+.nav-item:hover {
+  background: var(--panel);
+  color: var(--text);
 }
-.main {
-  padding: 20px 24px;
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(79, 124, 255, 0.22), rgba(34, 211, 238, 0.1));
+  color: #fff;
+}
+.nav-item.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.nav-item.disabled:hover {
+  background: transparent;
+  color: var(--muted);
+}
+.rail-bottom {
+  margin-top: auto;
+}
+.content {
+  flex: 1;
   overflow-y: auto;
+  padding: 28px 34px;
 }
 
-/* dark overrides for Element Plus */
+/* element plus dark vars */
 html.dark {
   --el-bg-color: var(--panel);
-  --el-bg-color-overlay: var(--panel-2);
+  --el-bg-color-overlay: #1d222c;
   --el-border-color: var(--line);
   --el-fill-color-blank: var(--panel);
   --el-text-color-primary: var(--text);
   --el-text-color-regular: var(--muted);
-}
-.el-descriptions__body {
-  background: transparent;
+  --el-color-primary: var(--accent);
 }
 </style>

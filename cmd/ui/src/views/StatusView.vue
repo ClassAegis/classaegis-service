@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, onUnmounted, computed, ref } from 'vue'
-import { Cpu, Link, Monitor, Box, Tag, Star } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 const status = ref(null)
 const error = ref('')
@@ -23,221 +23,259 @@ onMounted(() => {
 })
 onUnmounted(() => clearInterval(timer))
 
-const overall = computed(() => {
-  if (!status.value) return { label: '离线', tone: 'bad' }
-  const s = status.value
-  const allOk = s.connected && s.workerAlive
-  return allOk ? { label: '运行中', tone: 'ok' } : { label: '降级', tone: 'warn' }
-})
+const allOk = computed(
+  () => status.value && status.value.connected && status.value.workerAlive
+)
 
-const cards = computed(() => {
-  const s = status.value || {}
-  return [
-    { icon: Monitor, label: '设备 SN', value: s.sn || '—', tone: '' },
-    { icon: Tag, label: '学校代码', value: s.schoolCode || '—', tone: '' },
-    {
-      icon: Link,
-      label: 'MQTT 连接',
-      value: s.connected ? '已连接' : '断开',
-      tone: s.connected ? 'ok' : 'bad',
-    },
-    {
-      icon: Box,
-      label: '业务进程',
-      value: s.workerAlive ? '运行中' : '未运行',
-      tone: s.workerAlive ? 'ok' : 'bad',
-    },
-    { icon: Cpu, label: 'Agent 版本', value: s.agentVersion || '—', tone: '' },
-    { icon: Star, label: '协议版本', value: s.protocolVersion || '—', tone: '' },
-  ]
-})
+async function selfCheck() {
+  await refresh()
+  if (allOk.value) {
+    ElMessage.success('自检通过:MQTT 与业务进程均正常')
+  } else {
+    ElMessage.error('自检未通过:核心进程不可达或子系统异常')
+  }
+}
+
+async function openLogs() {
+  await window.ocm.openLogs()
+}
 </script>
 
 <template>
-  <div>
-    <!-- hero -->
-    <div class="hero" :class="overall.tone">
-      <div class="ring">
-        <svg viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="52" class="ring-bg" />
-          <circle cx="60" cy="60" r="52" class="ring-fg" :class="overall.tone" />
+  <div class="page">
+    <div class="hero">
+      <div class="hero-left">
+        <div class="eyebrow">
+          设备 SN <b>{{ status?.sn || '—' }}</b>
+          <span class="sep">·</span> 学校 {{ status?.schoolCode || '—' }}
+          <span class="sep">·</span> 协议 v{{ status?.protocolVersion || '0.1' }}
+        </div>
+        <h1 class="headline">
+          壹课管家<span class="accent">正在守护</span>这台电脑
+        </h1>
+        <div class="chips" v-if="status">
+          <span class="chip" :class="status.connected ? 'ok' : 'bad'">
+            <i class="dot"></i>MQTT {{ status.connected ? '已连接' : '已断开' }}
+          </span>
+          <span class="chip" :class="status.workerAlive ? 'ok' : 'bad'">
+            <i class="dot"></i>业务进程{{ status.workerAlive ? '运行中' : '未运行' }}
+          </span>
+        </div>
+        <div class="actions">
+          <button class="btn-primary" @click="selfCheck">立即自检</button>
+          <button class="btn-ghost" @click="openLogs">打开日志目录</button>
+        </div>
+      </div>
+
+      <div class="hero-art">
+        <svg viewBox="0 0 300 220" class="circuit">
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#4f7cff" />
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4" />
+            </linearGradient>
+          </defs>
+          <g fill="none" stroke="url(#g1)" stroke-width="1.5" opacity="0.85">
+            <path d="M10 40 H80 V80 H120" />
+            <path d="M10 110 H60 V150 H120" />
+            <path d="M10 180 H90 V130 H120" />
+            <path d="M290 60 H220 V90 H180" />
+            <path d="M290 150 H230 V120 H180" />
+            <path d="M290 195 H210 V155 H180" />
+          </g>
+          <g fill="#22d3ee" opacity="0.9">
+            <rect x="6" y="36" width="8" height="8" rx="1" />
+            <rect x="6" y="106" width="8" height="8" rx="1" />
+            <rect x="6" y="176" width="8" height="8" rx="1" />
+            <rect x="286" y="56" width="8" height="8" rx="1" />
+            <rect x="286" y="146" width="8" height="8" rx="1" />
+            <rect x="286" y="191" width="8" height="8" rx="1" />
+          </g>
+          <g>
+            <rect x="120" y="60" width="60" height="100" rx="6" fill="none" stroke="url(#g1)" stroke-width="2" />
+            <rect x="132" y="74" width="36" height="72" rx="4" fill="rgba(79,124,255,0.10)" stroke="#4f7cff" stroke-width="1.5" />
+            <text x="150" y="116" text-anchor="middle" fill="#8b93a7" font-size="12">壹</text>
+          </g>
         </svg>
-        <span class="pulse" :class="overall.tone"></span>
-      </div>
-      <div class="hero-text">
-        <div class="hero-title">
-          {{ overall.label }}
-          <span class="hero-sub">壹课管家 · 本机</span>
-        </div>
-        <div class="hero-desc">
-          {{ error ? '核心进程不可达:' + error : '全部子系统受控运行,指令通道正常' }}
-        </div>
-      </div>
-      <div class="hero-meta">
-        <div class="meta-k">上报间隔</div>
-        <div class="meta-v">10s</div>
-      </div>
-      <div class="hero-meta">
-        <div class="meta-k">Broker</div>
-        <div class="meta-v">127.0.0.1:1883</div>
       </div>
     </div>
 
-    <!-- metric cards -->
-    <div class="grid">
-      <div v-for="c in cards" :key="c.label" class="card">
-        <div class="card-icon"><el-icon :size="18"><component :is="c.icon" /></el-icon></div>
-        <div class="card-body">
-          <div class="card-label">{{ c.label }}</div>
-          <div class="card-value" :class="c.tone">{{ c.value }}</div>
-        </div>
+    <div class="quickbar">
+      <div class="quick" @click="openLogs">
+        <div class="q-icon">📂</div>
+        <div class="q-label">日志目录</div>
       </div>
+      <div class="quick disabled" title="UI-M1 提供">
+        <div class="q-icon">📜</div>
+        <div class="q-label">日志查看</div>
+      </div>
+      <div class="quick disabled" title="M2 提供">
+        <div class="q-icon">⬆️</div>
+        <div class="q-label">检查更新</div>
+      </div>
+    </div>
+
+    <div class="verline">
+      版本 0.1.0 · 协议 0.1 · OneClassMesh 壹课互联
     </div>
   </div>
 </template>
 
 <style scoped>
+.page {
+  min-height: calc(100vh - 96px);
+  display: flex;
+  flex-direction: column;
+}
 .hero {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 20px 24px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #1a2030, #151a24);
-  border: 1px solid var(--line);
+  gap: 24px;
+  flex: 1;
 }
-.ring {
-  position: relative;
-  width: 96px;
-  height: 96px;
-  flex: none;
+.hero-left {
+  flex: 1;
 }
-.ring svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-.ring-bg {
-  fill: none;
-  stroke: var(--line);
-  stroke-width: 8;
-}
-.ring-fg {
-  fill: none;
-  stroke-width: 8;
-  stroke-linecap: round;
-  stroke-dasharray: 327;
-  stroke-dashoffset: 60;
-}
-.ring-fg.ok {
-  stroke: #34d399;
-}
-.ring-fg.warn {
-  stroke: #fbbf24;
-}
-.ring-fg.bad {
-  stroke: #f87171;
-}
-.pulse {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--ok);
-  animation: pulse 2s infinite;
-}
-.pulse.warn {
-  background: #fbbf24;
-}
-.pulse.bad {
-  background: var(--bad);
-  animation: none;
-}
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(52, 211, 153, 0);
-  }
-  100% {
-    kill... box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
-  }
-}
-.hero-title {
-  font-size: 22px;
-  font-weight: 700;
-}
-.hero-sub {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--muted);
-  margin-left: 8px;
-}
-.hero-desc {
-  margin-top: 6px;
+.eyebrow {
   font-size: 13px;
   color: var(--muted);
 }
-.hero-meta {
-  margin-left: auto;
-  text-align: right;
-  padding-left: 24px;
+.eyebrow b {
+  color: var(--text);
+  font-weight: 600;
 }
-.meta-k {
-  font-size: 11px;
+.sep {
+  margin: 0 6px;
+  opacity: 0.5;
+}
+.headline {
+  margin: 10px 0 18px;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.accent {
+  background: linear-gradient(90deg, #4f7cff, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0 6px;
+}
+.chips {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
   color: var(--muted);
+  background: rgba(23, 26, 33, 0.7);
 }
-.meta-v {
-  font-size: 14px;
-  margin-top: 4px;
+.chip.ok .dot {
+  background: var(--ok);
+  box-shadow: 0 0 6px var(--ok);
 }
-
-.grid {
-  margin-top: 16px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+.chip.bad .dot {
+  background: var(--bad);
 }
-.card {
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.actions {
   display: flex;
   gap: 12px;
-  align-items: center;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  transition: transform 0.15s ease, border-color 0.15s ease;
 }
-.card:hover {
-  transform: translateY(-2px);
+.btn-primary {
+  padding: 11px 30px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #4f7cff, #3b82f6);
+  box-shadow: 0 6px 18px rgba(79, 124, 255, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(79, 124, 255, 0.45);
+}
+.btn-ghost {
+  padding: 11px 20px;
+  font-size: 13.5px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-ghost:hover {
+  color: var(--text);
   border-color: #33405c;
 }
-.card-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
+
+.hero-art {
+  flex: none;
+  width: 320px;
+  opacity: 0.9;
+}
+.circuit {
+  width: 100%;
+  height: auto;
+}
+
+.quickbar {
+  display: flex;
+  gap: 34px;
+  justify-content: center;
+  padding: 18px 0 6px;
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+}
+.quick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  color: var(--muted);
+  transition: color 0.15s ease;
+}
+.quick:hover {
+  color: var(--text);
+}
+.quick.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.q-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
   display: grid;
   place-items: center;
-  background: rgba(79, 124, 255, 0.12);
-  color: var(--accent-2);
-  flex: none;
+  font-size: 18px;
+  background: var(--panel);
 }
-.card-label {
+.q-label {
   font-size: 12px;
-  color: var(--muted);
 }
-.card-value {
-  font-size: 15px;
-  font-weight: 600;
-  margin-top: 2px;
-}
-.card-value.ok {
-  color: var(--ok);
-}
-.card-value.bad {
-  color: var(--bad);
+.verline {
+  text-align: center;
+  font-size: 11.5px;
+  color: #5c6478;
+  padding: 10px 0 4px;
 }
 </style>

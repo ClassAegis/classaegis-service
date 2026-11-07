@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, shell } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const http = require('http')
@@ -98,5 +98,14 @@ app.whenReady().then(() => {
     protocol: '0.1',
     configPath: config.path || '',
   }))
+  ipcMain.handle('open-logs', async () => {
+    const base = process.env.ProgramData || '.'
+    const dir = path.join(base, 'oneclassmesh', 'logs')
+    try {
+      fs.mkdirSync(dir, { recursive: true })
+    } catch (_) {}
+    const err = await shell.openPath(dir)
+    return { ok: !err, error: err || '' }
+  })
   createWindow()
 })
