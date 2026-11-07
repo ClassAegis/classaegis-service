@@ -66,9 +66,18 @@ function fetchStatus() {
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 920,
-    height: 640,
+    width: 980,
+    height: 660,
+    minWidth: 820,
+    minHeight: 560,
     title: '壹课管家',
+    backgroundColor: '#101216',
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#101216',
+      symbolColor: '#aeb6c5',
+      height: 40,
+    },
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
