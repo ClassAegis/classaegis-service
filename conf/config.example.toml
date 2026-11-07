@@ -1,0 +1,16 @@
+# OneClassMesh agent config example.
+# Copy to conf/config.toml and fill in real values (config.toml is git-ignored).
+
+[device]
+school_code = "demo"
+sn = "WIN-001"
+device_secret = "dev-secret-001"
+mqtt_token = "dev-token-001"
+
+[broker]
+host = "127.0.0.1"
+port = 1883
+
+[agent]
+heartbeat_seconds = 60
+log_level = "info"
