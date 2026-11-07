@@ -1,4 +1,4 @@
-# OneClassMesh 客户端 · 雁管家(oneclassmesh-agent)
+# OneClassMesh 客户端 · 课脉管家(oneclassmesh-agent)
 
 设备侧 Agent:Android(一体机/班牌,优先)与 Windows(M2)。协议契约见 docs 仓协议规范 v0.1。
 
