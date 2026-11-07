@@ -71,11 +71,11 @@ function createWindow() {
     minWidth: 820,
     minHeight: 560,
     title: '壹课管家',
-    backgroundColor: '#101216',
+    backgroundColor: '#eaf4ff',
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#101216',
-      symbolColor: '#aeb6c5',
+      color: '#eaf4ff',
+      symbolColor: '#5a6273',
       height: 40,
     },
     webPreferences: {

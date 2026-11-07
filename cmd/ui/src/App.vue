@@ -31,6 +31,13 @@ const page = ref('home')
   </div>
 
   <div class="content">
+    <div class="hills">
+      <svg viewBox="0 0 900 600" preserveAspectRatio="xMaxYMax slice">
+        <path d="M0 600 L180 420 L360 600 Z" fill="rgba(255,255,255,0.35)" />
+        <path d="M220 600 L430 380 L640 600 Z" fill="rgba(255,255,255,0.22)" />
+        <path d="M520 600 L700 460 L900 600 Z" fill="rgba(255,255,255,0.3)" />
+      </svg>
+    </div>
     <StatusView v-if="page === 'home'" />
     <AboutView v-else />
   </div>
@@ -38,46 +45,43 @@ const page = ref('home')
 
 <style>
 :root {
-  --bg: #101216;
-  --panel: #171a21;
-  --line: #262b36;
-  --text: #e6e9f0;
-  --muted: #8b93a7;
-  --accent: #4f7cff;
-  --accent-2: #22d3ee;
-  --ok: #34d399;
-  --bad: #f87171;
+  --sidebar: #2c3144;
+  --text-strong: #2c3144;
+  --text-mid: #5a6273;
+  --muted: #8a92a6;
+  --primary: #3da4ff;
+  --primary-deep: #2196f3;
+  --ok: #08d152;
+  --bad: #eb4240;
+  --card: #ffffff;
 }
 html,
 body {
   margin: 0;
   height: 100%;
-  background: var(--bg);
-  color: var(--text);
+  background: #eaf4ff;
+  color: var(--text-strong);
   font-family: 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
-html.dark {
-  color-scheme: dark;
-}
 #app {
   display: flex;
   height: 100vh;
-  padding-top: 40px; /* native titlebar overlay */
+  padding-top: 40px;
   box-sizing: border-box;
 }
 
-/* icon rail */
+/* dark-blue icon rail */
 .rail {
   width: 64px;
   flex: none;
-  background: #0d1015;
-  border-right: 1px solid var(--line);
+  background: var(--sidebar);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 12px 0;
+  z-index: 2;
 }
 .logo-mark {
   width: 38px;
@@ -87,16 +91,15 @@ html.dark {
   place-items: center;
   font-size: 17px;
   font-weight: 700;
-  color: #fff;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  margin-bottom: 22px;
-  cursor: default;
+  color: var(--sidebar);
+  background: #fff;
+  margin-bottom: 24px;
   user-select: none;
 }
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 .nav-item {
   width: 42px;
@@ -104,43 +107,52 @@ html.dark {
   border-radius: 11px;
   display: grid;
   place-items: center;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.55);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .nav-item:hover {
-  background: var(--panel);
-  color: var(--text);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
 }
 .nav-item.active {
-  background: linear-gradient(135deg, rgba(79, 124, 255, 0.22), rgba(34, 211, 238, 0.1));
+  background: var(--primary);
   color: #fff;
+  box-shadow: 0 4px 12px rgba(61, 164, 255, 0.45);
 }
 .nav-item.disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
-.nav-item.disabled:hover {
-  background: transparent;
-  color: var(--muted);
-}
 .rail-bottom {
   margin-top: auto;
 }
+
+/* light gradient content with hill silhouettes */
 .content {
   flex: 1;
+  position: relative;
   overflow-y: auto;
-  padding: 28px 34px;
+  padding: 26px 36px;
+  background: linear-gradient(160deg, #eaf4ff 0%, #d8eaff 55%, #cfe9ff 100%);
+}
+.hills {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hills svg {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
 }
 
-/* element plus dark vars */
-html.dark {
-  --el-bg-color: var(--panel);
-  --el-bg-color-overlay: #1d222c;
-  --el-border-color: var(--line);
-  --el-fill-color-blank: var(--panel);
-  --el-text-color-primary: var(--text);
-  --el-text-color-regular: var(--muted);
-  --el-color-primary: var(--accent);
+/* element plus light alignment */
+:root {
+  --el-color-primary: var(--primary);
+  --el-text-color-primary: var(--text-strong);
+  --el-text-color-regular: var(--text-mid);
 }
 </style>

@@ -39,6 +39,14 @@ async function selfCheck() {
 async function openLogs() {
   await window.ocm.openLogs()
 }
+
+const chips = computed(() => {
+  const s = status.value
+  return [
+    { label: 'MQTT ' + (s?.connected ? '已连接' : '已断开'), ok: !!s?.connected },
+    { label: '业务进程' + (s?.workerAlive ? '运行中' : '未运行'), ok: !!s?.workerAlive },
+  ]
+})
 </script>
 
 <template>
@@ -53,14 +61,17 @@ async function openLogs() {
         <h1 class="headline">
           壹课管家<span class="accent">正在守护</span>这台电脑
         </h1>
-        <div class="chips" v-if="status">
-          <span class="chip" :class="status.connected ? 'ok' : 'bad'">
-            <i class="dot"></i>MQTT {{ status.connected ? '已连接' : '已断开' }}
-          </span>
-          <span class="chip" :class="status.workerAlive ? 'ok' : 'bad'">
-            <i class="dot"></i>业务进程{{ status.workerAlive ? '运行中' : '未运行' }}
-          </span>
+
+        <div class="status-card">
+          <div class="chip" v-for="c in chips" :key="c.label">
+            <i class="dot" :class="c.ok ? 'ok' : 'bad'"></i>
+            <span :class="c.ok ? '' : 'bad-text'">{{ c.label }}</span>
+          </div>
+          <div class="chip" v-if="error">
+            <i class="dot bad"></i><span class="bad-text">核心进程不可达</span>
+          </div>
         </div>
+
         <div class="actions">
           <button class="btn-primary" @click="selfCheck">立即自检</button>
           <button class="btn-ghost" @click="openLogs">打开日志目录</button>
@@ -68,34 +79,23 @@ async function openLogs() {
       </div>
 
       <div class="hero-art">
-        <svg viewBox="0 0 300 220" class="circuit">
+        <svg viewBox="0 0 340 240">
           <defs>
-            <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#4f7cff" />
-              <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4" />
+            <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffffff" />
+              <stop offset="1" stop-color="#eaf4ff" />
+            </linearGradient>
+            <linearGradient id="shield" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#3da4ff" />
+              <stop offset="1" stop-color="#2196f3" />
             </linearGradient>
           </defs>
-          <g fill="none" stroke="url(#g1)" stroke-width="1.5" opacity="0.85">
-            <path d="M10 40 H80 V80 H120" />
-            <path d="M10 110 H60 V150 H120" />
-            <path d="M10 180 H90 V130 H120" />
-            <path d="M290 60 H220 V90 H180" />
-            <path d="M290 150 H230 V120 H180" />
-            <path d="M290 195 H210 V155 H180" />
-          </g>
-          <g fill="#22d3ee" opacity="0.9">
-            <rect x="6" y="36" width="8" height="8" rx="1" />
-            <rect x="6" y="106" width="8" height="8" rx="1" />
-            <rect x="6" y="176" width="8" height="8" rx="1" />
-            <rect x="286" y="56" width="8" height="8" rx="1" />
-            <rect x="286" y="146" width="8" height="8" rx="1" />
-            <rect x="286" y="191" width="8" height="8" rx="1" />
-          </g>
-          <g>
-            <rect x="120" y="60" width="60" height="100" rx="6" fill="none" stroke="url(#g1)" stroke-width="2" />
-            <rect x="132" y="74" width="36" height="72" rx="4" fill="rgba(79,124,255,0.10)" stroke="#4f7cff" stroke-width="1.5" />
-            <text x="150" y="116" text-anchor="middle" fill="#8b93a7" font-size="12">壹</text>
-          </g>
+          <rect x="40" y="20" width="220" height="150" rx="12" fill="url(#screen)" stroke="#b9d9f8" stroke-width="2" />
+          <rect x="58" y="38" width="184" height="114" rx="6" fill="#f2f9ff" />
+          <rect x="120" y="170" width="60" height="8" rx="4" fill="#b9d9f8" />
+          <path d="M235 120 c22 10 34 12 34 12 s12 -2 34 -12 v34 c0 26 -22 40 -34 46 c-12 -6 -34 -20 -34 -46 Z"
+                fill="url(#shield)" opacity="0.95" />
+          <path d="M252 152 l12 12 l24 -26" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </div>
     </div>
@@ -115,14 +115,13 @@ async function openLogs() {
       </div>
     </div>
 
-    <div class="verline">
-      版本 0.1.0 · 协议 0.1 · OneClassMesh 壹课互联
-    </div>
+    <div class="verline">版本 0.1.0 · 协议 0.1 · OneClassMesh 壹课互联</div>
   </div>
 </template>
 
 <style scoped>
 .page {
+  position: relative;
   min-height: calc(100vh - 96px);
   display: flex;
   flex-direction: column;
@@ -130,118 +129,120 @@ async function openLogs() {
 .hero {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
   flex: 1;
 }
 .hero-left {
   flex: 1;
+  z-index: 1;
 }
 .eyebrow {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--text-mid);
 }
 .eyebrow b {
-  color: var(--text);
-  font-weight: 600;
+  color: var(--text-strong);
 }
 .sep {
   margin: 0 6px;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 .headline {
-  margin: 10px 0 18px;
-  font-size: 30px;
+  margin: 12px 0 20px;
+  font-size: 32px;
   font-weight: 700;
+  color: var(--text-strong);
   letter-spacing: 0.5px;
 }
 .accent {
-  background: linear-gradient(90deg, #4f7cff, #22d3ee);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  margin: 0 6px;
+  color: var(--primary-deep);
+  margin: 0 4px;
 }
-.chips {
-  display: flex;
+.status-card {
+  display: inline-flex;
   gap: 10px;
-  margin-bottom: 24px;
+  padding: 10px 14px;
+  background: var(--card);
+  border-radius: 14px;
+  box-shadow: 0 6px 22px rgba(44, 49, 68, 0.08);
+  margin-bottom: 26px;
 }
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 12.5px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  background: rgba(23, 26, 33, 0.7);
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: #f2f9ff;
+  color: var(--text-strong);
 }
-.chip.ok .dot {
-  background: var(--ok);
-  box-shadow: 0 0 6px var(--ok);
-}
-.chip.bad .dot {
-  background: var(--bad);
+.bad-text {
+  color: var(--bad);
 }
 .dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--muted);
+}
+.dot.ok {
+  background: var(--ok);
+  box-shadow: 0 0 6px rgba(8, 209, 82, 0.6);
+}
+.dot.bad {
+  background: var(--bad);
 }
 .actions {
   display: flex;
-  gap: 12px;
+  gap: 14px;
 }
 .btn-primary {
-  padding: 11px 30px;
-  font-size: 14.5px;
+  padding: 12px 34px;
+  font-size: 15px;
   font-weight: 600;
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 24px;
   cursor: pointer;
-  background: linear-gradient(135deg, #4f7cff, #3b82f6);
-  box-shadow: 0 6px 18px rgba(79, 124, 255, 0.35);
+  background: linear-gradient(135deg, #3da4ff, #2196f3);
+  box-shadow: 0 8px 20px rgba(61, 164, 255, 0.4);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(79, 124, 255, 0.45);
+  box-shadow: 0 10px 26px rgba(61, 164, 255, 0.5);
 }
 .btn-ghost {
-  padding: 11px 20px;
-  font-size: 13.5px;
-  color: var(--muted);
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  padding: 12px 22px;
+  font-size: 14px;
+  color: var(--text-mid);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid #cfe4f8;
+  border-radius: 24px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .btn-ghost:hover {
-  color: var(--text);
-  border-color: #33405c;
+  color: var(--primary-deep);
+  border-color: var(--primary);
+  background: #fff;
 }
 
 .hero-art {
   flex: none;
-  width: 320px;
-  opacity: 0.9;
+  width: 340px;
+  z-index: 1;
 }
-.circuit {
+.hero-art svg {
   width: 100%;
   height: auto;
 }
 
 .quickbar {
   display: flex;
-  gap: 34px;
+  gap: 40px;
   justify-content: center;
-  padding: 18px 0 6px;
-  border-top: 1px solid var(--line);
-  margin-top: 18px;
+  padding: 16px 0 4px;
 }
 .quick {
   display: flex;
@@ -249,33 +250,34 @@ async function openLogs() {
   align-items: center;
   gap: 7px;
   cursor: pointer;
-  color: var(--muted);
-  transition: color 0.15s ease;
+  color: var(--text-mid);
+  transition: transform 0.15s ease;
 }
 .quick:hover {
-  color: var(--text);
+  transform: translateY(-2px);
 }
 .quick.disabled {
-  opacity: 0.35;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 .q-icon {
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  border: 1px solid var(--line);
   display: grid;
   place-items: center;
-  font-size: 18px;
-  background: var(--panel);
+  font-size: 19px;
+  background: var(--card);
+  box-shadow: 0 4px 14px rgba(44, 49, 68, 0.1);
 }
 .q-label {
   font-size: 12px;
+  color: var(--muted);
 }
 .verline {
   text-align: center;
   font-size: 11.5px;
-  color: #5c6478;
-  padding: 10px 0 4px;
+  color: var(--muted);
+  padding: 8px 0 2px;
 }
 </style>
