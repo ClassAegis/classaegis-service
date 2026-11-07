@@ -164,9 +164,15 @@ func createMutex() (windows.Handle, error) {
 		return 0, err
 	}
 	event, waitErr := windows.WaitForSingleObject(h, 0)
-	if waitErr != nil || event == windows.WAIT_OBJECT_0+1 {
+	if waitErr != nil {
+		return 0, waitErr
+	}
+	if event == uint32(windows.WAIT_TIMEOUT) {
+		windows.CloseHandle(h)
 		return 0, fmt.Errorf("mutex already held by another instance")
 	}
+	// WAIT_OBJECT_0 = acquired; WAIT_ABANDONED = acquired after a crashed
+	// previous owner, still counts as ours.
 	return h, nil
 }
 
