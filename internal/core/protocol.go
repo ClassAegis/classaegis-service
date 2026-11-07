@@ -73,6 +73,9 @@ func NowMillis() int64 {
 
 // BuildReceipt assembles a cmd/up receipt as compact JSON.
 func BuildReceipt(msgId, status string, result map[string]any, errCode, errMsg string) (string, error) {
+	if result == nil {
+		result = map[string]any{}
+	}
 	m := map[string]any{
 		"msgId":  msgId,
 		"status": status,

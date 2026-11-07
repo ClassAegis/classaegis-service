@@ -14,21 +14,21 @@ type Config struct {
 }
 
 type DeviceConfig struct {
-	SchoolCode   string
-	SN           string
-	DeviceSecret string
-	MqttToken    string
+	SchoolCode   string `toml:"school_code"`
+	SN           string `toml:"sn"`
+	DeviceSecret string `toml:"device_secret"`
+	MqttToken    string `toml:"mqtt_token"`
 }
 
 type BrokerConfig struct {
-	Host string
-	Port int
+	Host string `toml:"host"`
+	Port int    `toml:"port"`
 }
 
 type AgentConfig struct {
-	HeartbeatSeconds int
-	LogLevel         string
-	IPCToken         string
+	HeartbeatSeconds int    `toml:"heartbeat_seconds"`
+	LogLevel         string `toml:"log_level"`
+	IPCToken         string `toml:"ipc_token"`
 }
 
 // LoadConfig reads and validates conf/config.toml.
