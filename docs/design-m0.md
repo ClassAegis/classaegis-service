@@ -17,25 +17,37 @@
 - Windows 服务集成(x/sys/windows/svc)与 D-Bus(未来 Linux)都有成熟库
 - .NET 无官方 loong64,Java 被控端太重 —— 详见总览仓 PLAN §3
 
-## 1. 目录结构
+## 1. 目录结构(三进程架构:core + worker 先行,ui 后补)
 
 ```
 oneclassmesh-agent/
-├─ cmd/agent/main.go            入口:console 联调模式 + Windows 服务模式 + install/uninstall
-├─ cmd/ocmctl/main.go           联调工具:生成签名指令 JSON、可直发 MQTT
-├─ internal/core/
-│  ├─ config.go                 TOML 配置加载
-│  ├─ protocol.go               消息解析/规范化 JSON/HMAC/去重
-│  ├─ dispatcher.go             指令流水线
-│  ├─ heartbeat.go              心跳 60s
-│  └─ mqtt.go                   连接管理(订阅/回执/LWT/自动重连)
-├─ internal/platform/
-│  ├─ platform.go               适配接口(Lock/Unlock/Notify/Volume/Reboot)
-│  └─ windows/impl.go           Windows 实现
-├─ conf/config.example.toml     配置样例
-├─ docs/design-m0.md            本文档
-└─ README.md
+├─ cmd/core/main.go             核心进程:MQTT/校验/编排/IPC 服务端
+├─ cmd/worker/main.go           业务进程:执行指令(仅环回通信)
+├─ cmd/ui/                      显示应用(Electron,M0 末)——占位
+├─ cmd/agent/main.go            all-in-one 调试模式(单进程,联调备用)
+├─ cmd/ocmctl/main.go           联调工具:签名发令 + 监听回执
+├─ internal/core/               协议/流水线/心跳/连接(核心进程内)
+├─ internal/worker/             业务执行器(环回 HTTP 服务端 + platform 调用)
+├─ internal/ipc/                本地 API 契约(127.0.0.1 + token)
+├─ internal/platform/           平台适配(worker 进程内使用)
+├─ tools/                       杂项小程序(未来:诊断/日志导出/卸载器)
+├─ conf/config.example.toml
+└─ docs/design-m0.md
 ```
+
+## 1.1 进程与 IPC 契约
+
+| 进程 | 职责 | 网络 |
+|---|---|---|
+| **core(核心)** | 唯一出网组件:MQTT 收发、HMAC 校验、msgId 去重、心跳/LWT;向 worker 转发**已验签**指令;接收回执并发布;暴露 /status(未来 ui 用) | MQTT(集控端)+ 127.0.0.1:39817 |
+| **worker(业务)** | 执行指令(锁屏/Toast/音量/重启);调用 platform | 仅监听 127.0.0.1:39818 |
+| **ui(显示)** | 图形界面:状态/激活/日志;只读状态 + 提交激活 | 仅连 127.0.0.1:39817 |
+
+- 认证:环回请求带 `X-Ocm-Token`(= config `agent.ipc_token`,缺省由 mqtt_token 派生)
+- 超时:core 对每条指令维护 pending 超时(默认 30s,REBOOT 120s),超时回执 `FAILED E_TIMEOUT`
+- worker 注册:启动时 POST core /register 上报心跳,core 周期健康检查;worker 掉线时指令回执 `E_WORKER_OFFLINE`
+- 服务化(M1):core 以 Windows 服务运行;worker 由 core 经计划任务在用户会话拉起(Session 0 解法);ui 用户双击
+- 语言:core/worker = Go(内存安全 + 成品在手);ui = Electron——IPC 契约即边界,未来 worker 可独立换语言而不动协议
 
 ## 2. 配置文件(conf/config.toml,M0 手动录入)
 

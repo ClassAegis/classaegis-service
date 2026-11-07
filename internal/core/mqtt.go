@@ -6,27 +6,25 @@ import (
 	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
-
-	"github.com/OneClassMesh/oneclassmesh-agent/internal/platform"
 )
 
-// Agent wires config, platform adapter, dedup set, dispatcher and MQTT client.
+// Agent wires config, executor, dedup set, dispatcher and MQTT client.
 type Agent struct {
 	cfg        *Config
-	platform   platform.Platform
+	osName     string
 	seen       *SeenSet
 	client     paho.Client
 	dispatcher *Dispatcher
 	heartbeat  *time.Ticker
 }
 
-func NewAgent(cfg *Config, p platform.Platform) (*Agent, error) {
+func NewAgent(cfg *Config, exec Executor, osName string) (*Agent, error) {
 	seen, err := NewSeenSet(500)
 	if err != nil {
 		return nil, err
 	}
-	a := &Agent{cfg: cfg, platform: p, seen: seen}
-	a.dispatcher = NewDispatcher(p, seen, func() string {
+	a := &Agent{cfg: cfg, osName: osName, seen: seen}
+	a.dispatcher = NewDispatcher(exec, seen, func() string {
 		return cfg.Device.DeviceSecret
 	}, a.publishReceipt)
 	return a, nil
@@ -111,7 +109,7 @@ func (a *Agent) publishHeartbeat(topic string) {
 		"protocolVersion": "0.1",
 		"agentVersion":    "0.1.0",
 		"status":          "ONLINE",
-		"metrics":         map[string]any{"os": a.platform.Name()},
+		"metrics":         map[string]any{"os": a.osName},
 		"ts":              NowMillis(),
 	}
 	payload, err := MarshalCanonical(m)

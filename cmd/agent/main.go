@@ -1,5 +1,5 @@
-//go:build windows
-
+// agent is the all-in-one debug mode: core + worker in a single process.
+// Handy for quick local testing; production runs cmd/core + cmd/worker.
 package main
 
 import (
@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/OneClassMesh/oneclassmesh-agent/internal/core"
+	"github.com/OneClassMesh/oneclassmesh-agent/internal/worker"
 	win "github.com/OneClassMesh/oneclassmesh-agent/internal/platform/windows"
 )
 
@@ -22,7 +23,12 @@ func main() {
 		log.Fatalf("load config failed: %v", err)
 	}
 
-	agent, err := core.NewAgent(cfg, win.New())
+	// In-process executor: dispatcher calls the platform directly.
+	exec := core.ExecutorFunc(func(_ string, msgType string, payload map[string]any) (bool, string, string) {
+		return worker.ExecuteCommand(win.New(), msgType, payload)
+	})
+
+	agent, err := core.NewAgent(cfg, exec, "windows")
 	if err != nil {
 		log.Fatalf("new agent failed: %v", err)
 	}

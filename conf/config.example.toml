@@ -14,3 +14,5 @@ port = 1883
 [agent]
 heartbeat_seconds = 60
 log_level = "info"
+# ipc_token is optional; defaults to "ocm-" + mqtt_token
+ipc_token = ""

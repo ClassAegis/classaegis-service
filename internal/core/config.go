@@ -28,6 +28,7 @@ type BrokerConfig struct {
 type AgentConfig struct {
 	HeartbeatSeconds int
 	LogLevel         string
+	IPCToken         string
 }
 
 // LoadConfig reads and validates conf/config.toml.

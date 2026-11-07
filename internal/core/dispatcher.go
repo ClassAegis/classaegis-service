@@ -4,26 +4,40 @@ import (
 	"encoding/json"
 	"log"
 	"strconv"
-
-	"github.com/OneClassMesh/oneclassmesh-agent/internal/platform"
 )
+
+// Executor performs one verified command. Implemented by the loopback IPC
+// executor (core -> worker) and by the all-in-one debug executor (in-process).
+type Executor interface {
+	// Execute runs the command; returns ok=true on success, or code/message
+	// describing the failure (E_PLATFORM_UNSUPPORTED, E_FAILED, ...).
+	Execute(msgId, msgType string, payload map[string]any) (ok bool, code string, message string)
+}
 
 // Dispatcher runs the command pipeline:
 // parse -> msgId dedup -> HMAC verify -> EXECUTING receipt -> execute -> final receipt.
 type Dispatcher struct {
-	platform    platform.Platform
+	executor    Executor
 	seen        *SeenSet
 	secretFn    func() string
 	sendReceipt func(string)
 }
 
 func NewDispatcher(
-	p platform.Platform,
+	executor Executor,
 	seen *SeenSet,
 	secretFn func() string,
 	sendReceipt func(string),
 ) *Dispatcher {
-	return &Dispatcher{platform: p, seen: seen, secretFn: secretFn, sendReceipt: sendReceipt}
+	return &Dispatcher{executor: executor, seen: seen, secretFn: secretFn, sendReceipt: sendReceipt}
+}
+
+// ExecutorFunc adapts a plain function to the Executor interface
+// (used by the all-in-one debug mode).
+type ExecutorFunc func(msgId, msgType string, payload map[string]any) (ok bool, code string, message string)
+
+func (f ExecutorFunc) Execute(msgId, msgType string, payload map[string]any) (bool, string, string) {
+	return f(msgId, msgType, payload)
 }
 
 // OnCommand processes one raw cmd/down JSON message.
@@ -67,50 +81,13 @@ func (d *Dispatcher) OnCommand(raw string) {
 	d.receipt(msgId, "EXECUTING", nil, "", "")
 
 	payload, _ := msg["payload"].(map[string]any)
-	errPair := d.execute(msgType, payload)
-	if errPair != nil {
-		d.seen.Remove(msgId)
-		d.receipt(msgId, "FAILED", nil, errPair.code, errPair.message)
+	ok, code, message := d.executor.Execute(msgId, msgType, payload)
+	if ok {
+		d.receipt(msgId, "SUCCESS", nil, "", "")
 		return
 	}
-	d.receipt(msgId, "SUCCESS", nil, "", "")
-}
-
-type execError struct {
-	code    string
-	message string
-}
-
-func (d *Dispatcher) execute(msgType string, payload map[string]any) *execError {
-	switch msgType {
-	case "LOCK_SCREEN":
-		if err := d.platform.Lock(); err != nil {
-			return &execError{"E_PLATFORM_UNSUPPORTED", err.Error()}
-		}
-	case "UNLOCK_SCREEN":
-		if err := d.platform.Unlock(); err != nil {
-			return &execError{"E_FAILED", err.Error()}
-		}
-	case "SEND_MESSAGE":
-		title := str(payload, "title")
-		body := str(payload, "body")
-		ttl := int(getInt(payload, "ttlSeconds", 10))
-		if err := d.platform.Notify(title, body, ttl); err != nil {
-			return &execError{"E_PLATFORM_UNSUPPORTED", err.Error()}
-		}
-	case "SET_VOLUME":
-		vol := int(getInt(payload, "volume", 50))
-		if err := d.platform.SetVolume(vol); err != nil {
-			return &execError{"E_FAILED", err.Error()}
-		}
-	case "REBOOT":
-		if err := d.platform.Reboot(); err != nil {
-			return &execError{"E_PLATFORM_UNSUPPORTED", err.Error()}
-		}
-	default:
-		return &execError{"E_UNSUPPORTED_TYPE", "unknown type: " + msgType}
-	}
-	return nil
+	d.seen.Remove(msgId)
+	d.receipt(msgId, "FAILED", nil, code, message)
 }
 
 // receipt builds and sends a cmd/up receipt.
@@ -123,7 +100,7 @@ func (d *Dispatcher) receipt(msgId, status string, result map[string]any, code, 
 	d.sendReceipt(jsonStr)
 }
 
-// --- payload field helpers (UseNumber-decoded values) ---
+// payload field helpers (UseNumber-decoded values).
 
 func str(m map[string]any, key string) string {
 	if v, ok := m[key]; ok {
