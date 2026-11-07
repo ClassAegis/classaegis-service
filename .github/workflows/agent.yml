@@ -1,0 +1,130 @@
+name: agent-build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  build-go:
+    name: Go agent (windows x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Vet and test
+        run: |
+          go vet ./...
+          go test ./...
+
+      - name: Build binaries
+        shell: pwsh
+        run: |
+          $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v','' } else { $env:GITHUB_SHA.Substring(0,8) }
+          New-Item -ItemType Directory -Force out\bin, out\conf | Out-Null
+          foreach ($t in 'core','worker','agent','launcher','ocmctl') {
+            go build -trimpath -ldflags "-s -w" -o "out\bin\$t.exe" "./cmd/$t"
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+          }
+          Copy-Item conf/config.example.toml out/conf/
+          Compress-Archive -Path out\bin, out\conf -DestinationPath "out\OneClassMesh-Agent-win64-$v.zip" -Force
+          Write-Host "version=$v"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: go-bin
+          path: out/
+
+  package-ui:
+    name: NSIS installer
+    needs: build-go
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: cmd/ui/package-lock.json
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: go-bin
+          path: stage-dl
+
+      - name: Stage Go runtime and pin version
+        shell: pwsh
+        run: |
+          $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v','' } else { (Get-Content cmd/ui/package.json | ConvertFrom-Json).version }
+          Set-Location cmd/ui
+          npm version $v --no-git-tag-version --allow-same-version
+          New-Item -ItemType Directory -Force build\stage\ocm\bin, build\stage\ocm\conf | Out-Null
+          Copy-Item ..\stage-dl\bin\*.exe build\stage\ocm\bin\
+          Copy-Item ..\stage-dl\conf\config.example.toml build\stage\ocm\conf\
+          Write-Host "version=$v"
+
+      - name: Install, build, package
+        working-directory: cmd/ui
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          npx electron-builder --win nsis --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer
+          path: cmd/ui/release/*.exe
+
+  release:
+    name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-go, package-ui]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: go-bin
+          path: go-bin
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: installer
+          path: installer
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRERELEASE=""
+          case "$GITHUB_REF_NAME" in *-*) PRERELEASE="--prerelease";; esac
+          VER="${GITHUB_REF_NAME#v}"
+          cat > notes.md <<'EOF'
+          壹课管家 OneClassMesh Agent
+
+          - OneClassMesh-Agent-*-setup.exe : NSIS 安装包(显示应用 + core/worker/launcher 运行时)
+          - OneClassMesh-Agent-win64-*.zip : 绿色版(5 个 exe + config.example.toml)
+
+          安装说明:
+          1. 双击 setup.exe 安装(默认 Program Files\壹课管家)
+          2. 编辑 resources\ocm\conf\config.toml(首次由 example 复制,REPLACE_ME 需替换为真实配置)
+          3. 桌面快捷方式「壹课管家」启动:launcher 守护 core/worker 并打开显示应用
+          EOF
+          gh release create "$GITHUB_REF_NAME" go-bin/*.zip installer/*.exe \
+            --title "壹课管家 $VER" --notes-file notes.md $PRERELEASE

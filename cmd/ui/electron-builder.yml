@@ -1,5 +1,5 @@
 appId: io.github.oneclassmesh.agent.ui
-productName: OneClassMesh Agent
+productName: 壹课管家
 copyright: Apache-2.0
 directories:
   output: release
@@ -7,10 +7,18 @@ files:
   - electron/**/*
   - dist/**/*
   - package.json
-win:
-  target:
-    - nsis
+# Go agent runtime (core/worker/launcher/agent/ocmctl + conf) is staged into
+# build/stage/ocm by CI (or manually for local builds) and installed to
+# resources\ocm\ in the target machine.
+extraResources:
+  - from: build/stage/ocm
+    to: ocm
 nsis:
   oneClick: false
+  perMachine: true
   allowToChangeInstallationDirectory: true
-  createDesktopShortcut: true
+  # desktop shortcut points to launcher.exe -with-ui (see build/installer.nsh),
+  # so electron-builder's own Electron-exe desktop shortcut is disabled.
+  createDesktopShortcut: false
+  include: build/installer.nsh
+  artifactName: OneClassMesh-Agent-${version}-setup.${ext}

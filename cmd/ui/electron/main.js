@@ -9,6 +9,7 @@ let config = { schoolCode: '', sn: '', ipcToken: '', path: '' }
 function readConfig() {
   const candidates = [
     process.env.OCM_CONFIG,
+    app.isPackaged ? path.join(process.resourcesPath, 'ocm', 'conf', 'config.toml') : null,
     path.join(process.cwd(), 'conf', 'config.toml'),
     path.join(__dirname, '..', '..', 'conf', 'config.toml'),
   ].filter(Boolean)

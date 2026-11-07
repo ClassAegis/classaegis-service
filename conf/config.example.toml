@@ -2,13 +2,13 @@
 # Copy to conf/config.toml and fill in real values (config.toml is git-ignored).
 
 [device]
-school_code = "demo"
-sn = "WIN-001"
-device_secret = "dev-secret-001"
-mqtt_token = "dev-token-001"
+school_code = "REPLACE_ME"
+sn = "REPLACE_ME"
+device_secret = "REPLACE_ME"
+mqtt_token = "REPLACE_ME"
 
 [broker]
-host = "127.0.0.1"
+host = "REPLACE_ME"
 port = 1883
 
 [agent]

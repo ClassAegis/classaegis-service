@@ -20,4 +20,4 @@ Thumbs.db
 # build staging and installer output
 out/
 release/
-build/stage/
+**/build/stage/

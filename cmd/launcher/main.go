@@ -20,6 +20,7 @@ import (
 
 	"golang.org/x/sys/windows"
 
+	"github.com/OneClassMesh/oneclassmesh-agent/internal/core"
 	"github.com/OneClassMesh/oneclassmesh-agent/internal/core/logx"
 )
 
@@ -98,10 +99,7 @@ func main() {
 	}
 	binDir := filepath.Dir(exePath)
 
-	cfgPath := *config
-	if cfgPath == "" {
-		cfgPath = filepath.Join(binDir, "conf", "config.toml")
-	}
+	cfgPath := resolveConfigPath(*config, binDir)
 
 	// single instance
 	guard, err := createMutex()
@@ -111,15 +109,23 @@ func main() {
 	defer windows.CloseHandle(guard)
 
 	log.Printf("[launcher] started, dir=%s config=%s", binDir, cfgPath)
-	logIntegrity(binDir)
 
 	sup := &supervisor{dir: binDir, config: cfgPath, withUI: *withUI, bin: binDir}
 	sup.worker = &child{name: "worker.exe", args: []string{"-config", cfgPath}}
 	sup.core = &child{name: "core.exe", args: []string{"-config", cfgPath}}
 
-	sup.start(sup.worker)
-	time.Sleep(500 * time.Millisecond)
-	sup.start(sup.core)
+	// A fresh install ships no valid config.toml yet. Instead of letting
+	// core crash-loop, wait until the config validates, then bring the
+	// stack up (poll happens in watch()).
+	ready := configValid(cfgPath)
+	if ready {
+		logIntegrity(binDir)
+		sup.start(sup.worker)
+		time.Sleep(500 * time.Millisecond)
+		sup.start(sup.core)
+	} else {
+		log.Printf("[launcher] config not ready, waiting for a valid configuration")
+	}
 
 	if sup.withUI {
 		sup.startUI()
@@ -132,6 +138,23 @@ func main() {
 	<-quit
 	log.Printf("[launcher] shutting down children")
 	sup.stopAll()
+}
+
+// resolveConfigPath: -config flag > OCM_CONFIG env > <exe dir>/conf/config.toml.
+func resolveConfigPath(flagVal, binDir string) string {
+	if flagVal != "" {
+		return flagVal
+	}
+	if v := os.Getenv("OCM_CONFIG"); v != "" {
+		return v
+	}
+	return filepath.Join(binDir, "conf", "config.toml")
+}
+
+// configValid reports whether the config loads and validates.
+func configValid(path string) bool {
+	_, err := core.LoadConfig(path)
+	return err == nil
 }
 
 func createMutex() (windows.Handle, error) {
@@ -189,14 +212,23 @@ func (s *supervisor) start(c *child) {
 }
 
 func (s *supervisor) startUI() {
-	uiPath := filepath.Join(s.dir, "ui", "壹课管家.exe")
-	if _, err := os.Stat(uiPath); err != nil {
-		p := filepath.Join(s.dir, "cmd", "ui", "node_modules", "electron", "dist", "electron.exe")
-		if _, err2 := os.Stat(p); err2 != nil {
-			log.Printf("[launcher] ui not found, skip")
-			return
+	// candidates: dev layout (repo root) > packaged layout (resources/ocm/bin
+	// is three levels under the install root) > electron dev binary.
+	candidates := []string{
+		filepath.Join(s.dir, "ui", "壹课管家.exe"),
+		filepath.Join(s.dir, "..", "..", "..", "壹课管家.exe"),
+		filepath.Join(s.dir, "cmd", "ui", "node_modules", "electron", "dist", "electron.exe"),
+	}
+	var uiPath string
+	for _, p := range candidates {
+		if _, err := os.Stat(p); err == nil {
+			uiPath = p
+			break
 		}
-		uiPath = p
+	}
+	if uiPath == "" {
+		log.Printf("[launcher] ui not found, skip")
+		return
 	}
 	go func() {
 		cmd := exec.Command(uiPath)
@@ -206,6 +238,8 @@ func (s *supervisor) startUI() {
 }
 
 func (s *supervisor) watch() {
+	ready := configValid(s.config)
+	loggedWaiting := false
 	for {
 		time.Sleep(3 * time.Second)
 		s.mu.Lock()
@@ -214,6 +248,23 @@ func (s *supervisor) watch() {
 			return
 		}
 		s.mu.Unlock()
+
+		if !ready {
+			if !configValid(s.config) {
+				if !loggedWaiting {
+					log.Printf("[launcher] still waiting for a valid configuration at %s", s.config)
+					loggedWaiting = true
+				}
+				continue
+			}
+			ready = true
+			log.Printf("[launcher] configuration ready, starting children")
+			logIntegrity(s.dir)
+			s.start(s.worker)
+			time.Sleep(500 * time.Millisecond)
+			s.start(s.core)
+			continue
+		}
 
 		for _, c := range []*child{s.worker, s.core} {
 			if !c.alive() {
