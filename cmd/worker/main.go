@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/OneClassMesh/oneclassmesh-agent/internal/core"
+	"github.com/OneClassMesh/oneclassmesh-agent/internal/core/logx"
 	"github.com/OneClassMesh/oneclassmesh-agent/internal/worker"
 	win "github.com/OneClassMesh/oneclassmesh-agent/internal/platform/windows"
 )
@@ -15,6 +16,10 @@ import (
 func main() {
 	configPath := flag.String("config", "conf/config.toml", "path to config.toml")
 	flag.Parse()
+
+	if err := logx.Setup("worker"); err != nil {
+		log.Printf("file log disabled: %v", err)
+	}
 
 	cfg, err := core.LoadConfig(*configPath)
 	if err != nil {

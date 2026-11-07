@@ -1,0 +1,16 @@
+appId: io.github.oneclassmesh.agent.ui
+productName: OneClassMesh Agent
+copyright: Apache-2.0
+directories:
+  output: release
+files:
+  - electron/**/*
+  - dist/**/*
+  - package.json
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
