@@ -49,6 +49,23 @@ oneclassmesh-agent/
 - 服务化(M1):core 以 Windows 服务运行;worker 由 core 经计划任务在用户会话拉起(Session 0 解法);ui 用户双击
 - 语言:core/worker = Go(内存安全 + 成品在手);ui = Electron——IPC 契约即边界,未来 worker 可独立换语言而不动协议
 
+## 1.2 启动器与守护(launcher)
+
+**定位**:桌面快捷方式的指向目标;负责拉起、监视、守护全部重要进程。未来 Windows 服务的服务主体就是它。
+
+```
+launcher.exe(守护者)
+├─ 单实例锁:Local\OneClassMesh.Launcher(防重复启动)
+├─ 完整性校验:启动时记录 core/worker SHA256(M1 对比签名清单,防替换)
+├─ 启动序列:worker.exe → core.exe(绝对路径 + -config;-with-ui 可选拉起显示应用)
+├─ 守护循环(3s 扫描):
+│    进程死亡 → 自动重启,指数退避 1s/2s/4s…(上限 30s)
+│    连续崩溃 ≥5 次 → 冷却 60s 并记日志(防 CPU 空转)
+└─ 退出:Ctrl+C 优雅停机并带走子进程(M1 服务模式下由服务管理器接管)
+```
+
+**防篡改分级(如实)**:M0 = 自动复活 + 单实例 + 完整性记录;M1 = core 注册 SYSTEM 服务(普通用户无法结束,这才是防杀主体);不做内核驱动级反杀(合规/稳定性代价不成比例)。
+
 ## 2. 配置文件(conf/config.toml,M0 手动录入)
 
 ```toml
