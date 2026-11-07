@@ -74,8 +74,8 @@ jobs:
           Set-Location cmd/ui
           npm version $v --no-git-tag-version --allow-same-version
           New-Item -ItemType Directory -Force build\stage\ocm\bin, build\stage\ocm\conf | Out-Null
-          Copy-Item ..\stage-dl\bin\*.exe build\stage\ocm\bin\
-          Copy-Item ..\stage-dl\conf\config.example.toml build\stage\ocm\conf\
+          Copy-Item ..\..\stage-dl\bin\*.exe build\stage\ocm\bin\
+          Copy-Item ..\..\stage-dl\conf\config.example.toml build\stage\ocm\conf\
           Write-Host "version=$v"
 
       - name: Install, build, package
