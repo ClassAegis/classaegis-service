@@ -1,14 +1,15 @@
-# Gradle / Android
-.gradle/
-build/
-local.properties
-*.apk
-captures/
-.cxx/
+# Go
+agent.exe
+ocmctl.exe
+*.exe
+dist/
+oneclassmesh-agent
+
+# conf with real credentials
+conf/config.toml
 
 # IDE / OS
 .idea/
-*.iml
 .vscode/
 Thumbs.db
 .DS_Store

@@ -1,139 +1,118 @@
-# 壹课管家(被控端)M0 设计文档
+# 壹课管家(被控端)M0 设计文档 — Go / Windows
 
 | 项 | 值 |
 |---|---|
-| 仓库 | oneclassmesh-agent(android/) |
-| 依据 | docs 仓协议规范 v0.1 + 总览仓 PLAN.md §5 |
-| 状态 | 设计评审中(代码暂停,评审通过后继续) |
+| 仓库 | oneclassmesh-agent |
+| 语言 | **Go 1.23**(静态编译,单文件,无运行时依赖) |
+| 目标平台 | **Windows 10/11 x64(M0 唯一目标)**;Linux/UOS/麒麟为后续里程碑(platform 适配接口已预留) |
+| 运行形态 | M0:控制台模式联调;M0 末:M1:Windows 服务(LOCAL SYSTEM) |
+| 依据 | docs 仓协议规范 v0.1 |
+| 状态 | 设计定稿,按此实现 |
 | 更新 | 2026-11-07 |
 
-## 0. 技术栈与架构形态
+## 0. 为什么是 Go
 
-**架构形态:原生 Android 应用(Kotlin)**,不是 Electron / Qt / Flutter。
-理由:被控端的全部核心能力——前台常驻服务、DevicePolicyManager(锁屏/重启)、悬浮窗覆盖层、MQTT 长连接——都是 Android 平台层能力,原生调用零隔阂;跨端框架(Electron 仅桌面端不存在于 Android;Flutter/RN 的服务与权限仍需原生插件)反而增加隔阂。
+- 单代码库 → windows/amd64、linux/amd64、后续 linux/arm64、**linux/loong64(龙芯信创)**,静态编译单文件零依赖
+- 长连接并发模型天然契合 MQTT 常驻
+- Windows 服务集成(x/sys/windows/svc)与 D-Bus(未来 Linux)都有成熟库
+- .NET 无官方 loong64,Java 被控端太重 —— 详见总览仓 PLAN §3
 
-| 层 | 技术 | 版本 |
-|---|---|---|
-| 语言 | Kotlin(JVM 17 字节码) | 1.9.24 |
-| 构建 | Gradle + Android Gradle Plugin | 8.9 / 8.5.2 |
-| 目标 | minSdk 24(Android 7) / targetSdk 34 | 一体机主流 7~11 |
-| MQTT | Eclipse Paho mqttv3(客户端自带重连线程) | 1.2.5 |
-| JSON | Gson + 自研规范化序列化(签名用) | 2.11 |
-| UI | 原生 Android View,程序化构建(无 XML 布局,M0 极简) | — |
-| 常驻 | Foreground Service(API34 specialUse 类型)+ BOOT_COMPLETED 自启 | — |
-| 存储 | SharedPreferences(凭证 + msgId 去重集) | — |
-| 签名 | HMAC-SHA256(javax.crypto,与服务端 Jackson 规范串对齐) | — |
-
-**Windows 被控端(M2)预览**:规划采用 .NET 8 Worker Service(系统服务形态、原生锁屏/会话 API、单文件发布),而非 Electron/Qt——两端各自原生,只共享协议规范。
-
-## 0.1 进程与线程模型
-
-- 单进程 `io.github.oneclassmesh.agent`
-- MqttService 前台服务跑在主线程;Paho MqttAsyncClient 自带内部网络线程(连接/订阅均为异步)
-- 心跳:java.util.Timer 独立线程,60s 周期发布 hb
-- 指令到达:messageArrived 回调在 Paho 线程;流水线在该线程完成(去重/验签/执行);涉及 UI 的操作(悬浮窗、锁屏)切换主线程
-- 回执发布:Paho 异步 publish,不阻塞流水线
-
-## 1. 总体结构
+## 1. 目录结构
 
 ```
-┌──────────────────────────────────────────────────────┐
-│ MainActivity(激活 UI + 状态日志)                       │
-│   输入激活码+服务端地址 → HTTP 激活 → 存凭证 → 启动服务   │
-├──────────────────────────────────────────────────────┤
-│ MqttService(前台服务,常驻)                            │
-│   连接 EMQX(username=SN, password=mqttToken)          │
-│   订阅 cmd/down │ 心跳 60s │ LWT 遗嘱 │ 发布回执        │
-├──────────────────────────────────────────────────────┤
-│ CommandDispatcher(指令流水线)                          │
-│   parse → msgId 去重(持久化) → HMAC 验签               │
-│   → EXECUTING 回执 → execute → SUCCESS/FAILED 回执     │
-├──────────────┬───────────────┬───────────────────────┤
-│ MessageOverlay│ LockHelper     │ AudioManager / DPM    │
-│ (消息覆盖层)  │ (锁屏/解锁)    │ (音量 / 重启)          │
-├──────────────┴───────────────┴───────────────────────┤
-│ Prefs(凭证存储) │ CanonicalJson + Hmac(协议层)         │
-└──────────────────────────────────────────────────────┘
+oneclassmesh-agent/
+├─ cmd/agent/main.go            入口:console 联调模式 + Windows 服务模式 + install/uninstall
+├─ cmd/ocmctl/main.go           联调工具:生成签名指令 JSON、可直发 MQTT
+├─ internal/core/
+│  ├─ config.go                 TOML 配置加载
+│  ├─ protocol.go               消息解析/规范化 JSON/HMAC/去重
+│  ├─ dispatcher.go             指令流水线
+│  ├─ heartbeat.go              心跳 60s
+│  └─ mqtt.go                   连接管理(订阅/回执/LWT/自动重连)
+├─ internal/platform/
+│  ├─ platform.go               适配接口(Lock/Unlock/Notify/Volume/Reboot)
+│  └─ windows/impl.go           Windows 实现
+├─ conf/config.example.toml     配置样例
+├─ docs/design-m0.md            本文档
+└─ README.md
 ```
 
-## 2. 模块职责
+## 2. 配置文件(conf/config.toml,M0 手动录入)
 
-| 文件 | 职责 | 状态 |
+```toml
+[device]
+school_code = "demo"
+sn = "WIN-001"
+device_secret = "dev-secret-001"
+mqtt_token = "dev-token-001"
+
+[broker]
+host = "127.0.0.1"
+port = 1883
+
+[agent]
+heartbeat_seconds = 60
+log_level = "info"
+```
+
+M0 手动录入模式(服务端激活接口 M0 后半段接入);真实激活 = 换 config 来源。
+
+## 2.1 核心库清单
+
+| 用途 | 库 | 版本 |
 |---|---|---|
-| AndroidManifest.xml | 组件装配 + 权限声明 | TODO |
-| MainActivity.kt | 激活码输入 → POST /api/v1/devices/activate → 存 Prefs → 启动 MqttService;状态日志区 | TODO |
-| MqttService.kt | 前台服务;MQTT 连接/订阅/心跳/LWT/回执发布 | ✅ 已写(待接线修正) |
-| CommandDispatcher.kt | 指令流水线:去重/验签/分发/回执 | ✅ 已写 |
-| MessageOverlay.kt | SEND_MESSAGE 悬浮覆盖层(TTL 自动消失) | TODO |
-| AdminReceiver.kt + device_admin.xml | 设备管理员(force-lock);DO 才有 reboot | ✅ 已写 |
-| Prefs.kt | 凭证与配置存储 | ✅ 已写 |
-| CanonicalJson.kt + Hmac.kt | 协议层:规范化 JSON + HMAC-SHA256 验签 | ✅ 协议规范 §5.1 |
-| LockHelper.kt | lockNow / 解锁语义 | TODO(并入 Dispatcher 或独立) |
+| MQTT | github.com/eclipse/paho.mqtt.golang | v1.5.0 |
+| 配置 | github.com/BurntSushi/toml | v1.4.0 |
+| Windows API | golang.org/x/sys/windows | latest |
+| Toast 通知 | github.com/go-toast/toast | latest |
+| 音量 | github.com/moutend/go-wca | latest |
+| 服务化 | golang.org/x/sys/windows/svc | 同 x/sys |
 
-## 3. 关键流程
+## 3. 指令流水线(继承协议规范)
 
-### 3.1 激活流程(M0 简化:暂无真实服务端)
-M0 联调阶段无真实服务端激活接口,提供两种激活方式:
-1. **手动录入模式**:MainActivity 提供开发者输入面板,直接填 schoolCode / SN / broker 地址 / mqttToken / deviceSecret(M0 联调用,等价于模拟激活)
-2. 真实激活接口接入 = M0 后续任务(服务端就绪后)
-
-### 3.2 指令流水线
 ```
 cmd/down JSON
-  → parse 失败:丢弃 + log
-  → msgId 已见:静默丢弃(幂等)
-  → HMAC 验签失败:回执 FAILED E_BAD_SIG,不执行
-  → 回执 EXECUTING(证明已收到)
-  → execute(type, payload)
-  → 回执 SUCCESS / FAILED(error.code)
+→ parse 失败:丢弃+log
+→ msgId 已见:静默丢弃(去重集持久化于 %ProgramData%\oneclassmesh\seen.json)
+→ HMAC 验签失败:回执 FAILED E_BAD_SIG,不执行
+→ 回执 EXECUTING
+→ execute(type, payload)
+→ 终态回执 SUCCESS / FAILED(error.code)
 ```
 
-### 3.3 心跳与 LWT
-- 心跳 60s,QoS0,hb topic,payload 含 sn/protocolVersion/agentVersion/metrics
-- 连接时设置 LWT:`{"msgId":null,"status":"OFFLINE",...}` 到 lwt topic
+## 4. 五个指令的 Windows 实现
 
-### 3.4 开机自启
-BOOT_COMPLETED → startForegroundService(MqttService)——manifest 声明 + receiver 类(待写)
+| type | 实现 | 依赖 | 失败模式 |
+|---|---|---|---|
+| LOCK_SCREEN | user32!LockWorkStation | syscall | 返回 false → E_FAILED |
+| UNLOCK_SCREEN | M0 语义 = 关闭本 Agent 的通知/覆盖层(Windows 锁屏不可编程解锁,这是安全设计) | — | — |
+| SEND_MESSAGE | Windows 10 Toast 通知(title/body/TTL) | go-toast/toast | 通知被系统策略禁用 → E_PLATFORM_UNSUPPORTED |
+| SET_VOLUME | Core Audio ISimpleAudioVolume | moutend/go-wca | COM 失败 → E_FAILED |
+| REBOOT | InitiateSystemShutdownEx(服务模式 SYSTEM 权限下可直接执行) | x/sys/windows | 无权限 → E_PLATFORM_UNSUPPORTED |
 
-## 4. 权限清单
+## 5. 关键风险:Session 0 隔离 ⚠️
 
-| 权限/机制 | 用途 | 授予方式 |
-|---|---|---|
-| INTERNET / ACCESS_NETWORK_STATE | MQTT 连接 | 安装即有 |
-| FOREGROUND_SERVICE + specialUse(API34) | 常驻服务 | 安装即有(需 manifest property 声明) |
-| RECEIVE_BOOT_COMPLETED | 开机自启 | 安装即有 |
-| SYSTEM_ALERT_WINDOW | 消息覆盖层 | 用户手动到设置授权(主页引导按钮) |
-| POST_NOTIFICATIONS(API33+) | 前台通知 | 动态请求 |
-| Device Admin(force-lock) | lockNow 锁屏 | MainActivity 引导激活设备管理员 |
-| Device Owner | reboot | adb: dpm set-device-owner(仅首次刷机后可用) |
+Windows 服务运行在 Session 0,与用户桌面隔离:
+- Toast 通知、锁屏等 UI 类指令在服务上下文中可能不可见/不可执行
+- 规划方案:服务进程(通信+系统级指令)+ **用户态伴随进程**(登录后启动,负责 Toast/锁屏等桌面指令),两者经本地 named pipe 通信
+- **M0 简化决策**:先以控制台模式(当前用户运行)联调全部指令,流水线与执行器已解耦,后续加服务化外壳不改核心;服务化+伴随进程列入 M0 末/M1
 
-## 5. 存储(Prefs keys)
+## 6. 联调计划(无服务端)
 
-| key | 内容 |
-|---|---|
-| schoolCode / sn | 命名空间与身份 |
-| deviceSecret | HMAC 验签密钥 |
-| mqttToken | MQTT 密码 + HTTP Bearer |
-| brokerHost / brokerPort | Broker 地址 |
-| seenIds | msgId 去重集(上限 500) |
+1. **EMQX Windows 免安装版**(zip 解压即用,免 Docker)起 Broker
+2. agent 以 console 模式 + config.toml 手动凭证连接
+3. `cmd/ocmctl` 生成签名指令并直发 MQTT(构造 msgId/type/payload/ts + HMAC 规范串)
+4. 验证:锁屏生效/Toast 弹出 + Dashboard 订阅 cmd/up 观察回执 EXECUTING→SUCCESS
 
-## 6. 异常与降级
+## 7. 与已废弃 Android 方案的关系
 
-| 场景 | 行为 |
-|---|---|
-| 非 Device Owner 下发 REBOOT | 回执 FAILED E_PLATFORM_UNSUPPORTED("requires device owner") |
-| 设备管理员未激活时 LOCK_SCREEN | 回执 FAILED E_PLATFORM_UNSUPPORTED("device admin not enabled") |
-| HMAC 验签失败 | 不执行,回执 FAILED E_BAD_SIG;服务端应告警 |
-| 悬浮窗权限未授予时 SEND_MESSAGE | M0 降级:回执 FAILED,提示需悬浮窗权限 |
-| 重复 msgId | 静默丢弃(幂等) |
-| MQTT 断线 | paho 自动重连 + 心跳暂停,恢复后重订阅重发心跳 |
+- android/ 目录与 Kotlin 代码已删除(git 历史保留)
+- 协议/流水线/命名体系原样继承,执行器从 Android 平台层换为 Windows 平台层
+- 协议规范 §6 指令类型表中 Android 实现要点将随 M0 联调修订为 Windows 实现
 
-## 7. 已知待接线问题(已写代码)
-- MqttService 中 `CommandDispatcher(this)` 需改为 `CommandDispatcher(this) { publishReceipt(it) }`(构造签名已含回执回调)
-- MqttService.messageArrived 调 dispatcher.onCommand ✓(已对齐)
+## 8. 里程碑映射
 
-## 8. 联调计划(无服务端)
-1. 本机 docker 起 EMQX(deploy/ 编排已有,需 Docker——未装)
-2. Agent 手动录入模式连上 EMQX
-3. EMQX Dashboard(Web)手动 publish cmd/down 测试指令
-4. 观察:EXECUTING→SUCCESS 回执出现在 Dashboard 订阅窗口
+- M0:console 模式闭环(本文档)→ M0 末:Windows 服务安装模式 + ocmctl 完善
+- M1:文件分发(FILE_PUSH)+ 真实激活接口对接 + 服务化+伴随进程
+- M2:Linux/UOS/麒麟适配(platform/linux/)+ 信创验证 + 壹课中枢对接
+```
