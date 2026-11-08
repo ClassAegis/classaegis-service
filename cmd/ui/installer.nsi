@@ -6,6 +6,9 @@ Unicode true
 !include "MUI2.nsh"
 
 !define APP_NAME "壹课管家"
+!ifndef VER
+!define VER "0.0.0-dev"
+!endif
 !define REG_UNINST "Software\Microsoft\Windows\CurrentVersion\Uninstall\OneClassMesh"
 !define REG_RUN "Software\Microsoft\Windows\CurrentVersion\Run"
 

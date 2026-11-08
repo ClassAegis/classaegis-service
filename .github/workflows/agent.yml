@@ -103,7 +103,7 @@ jobs:
           $mk = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
           if (-not (Test-Path $mk)) { $mk = "makensis" }
           Set-Location cmd/ui
-          & $mk -DVER=$v installer.nsi
+          & $mk "-DVER=$v" installer.nsi
           Get-ChildItem release\*.exe
 
       - uses: actions/upload-artifact@v4
