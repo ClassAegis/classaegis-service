@@ -100,8 +100,10 @@ jobs:
         run: |
           choco install nsis -y --no-progress
           $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v','' } else { (Get-Content cmd/ui/package.json | ConvertFrom-Json).version }
+          $mk = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+          if (-not (Test-Path $mk)) { $mk = "makensis" }
           Set-Location cmd/ui
-          makensis -DVER=$v installer.nsi
+          & $mk -DVER=$v installer.nsi
           Get-ChildItem release\*.exe
 
       - uses: actions/upload-artifact@v4
