@@ -2,6 +2,9 @@
 import { onMounted, onUnmounted, computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
+// 快捷区「日志查看」:请求 App.vue 切到日志页
+const emit = defineEmits(['open-logs-view'])
+
 const status = ref(null)
 const error = ref('')
 let timer = null
@@ -105,7 +108,7 @@ const chips = computed(() => {
         <div class="q-icon">📂</div>
         <div class="q-label">日志目录</div>
       </div>
-      <div class="quick disabled" title="UI-M1 提供">
+      <div class="quick" title="查看运行日志" @click="emit('open-logs-view')">
         <div class="q-icon">📜</div>
         <div class="q-label">日志查看</div>
       </div>

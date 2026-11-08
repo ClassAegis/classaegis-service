@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { HomeFilled, Document, InfoFilled, Setting } from '@element-plus/icons-vue'
 import StatusView from './views/StatusView.vue'
+import LogView from './views/LogView.vue'
 import AboutView from './views/AboutView.vue'
 
 const page = ref('home')
@@ -15,7 +16,7 @@ const page = ref('home')
       <div class="nav-item" :class="{ active: page === 'home' }" @click="page = 'home'" title="首页">
         <el-icon :size="20"><HomeFilled /></el-icon>
       </div>
-      <div class="nav-item disabled" title="日志(UI-M1)">
+      <div class="nav-item" :class="{ active: page === 'logs' }" @click="page = 'logs'" title="日志">
         <el-icon :size="20"><Document /></el-icon>
       </div>
       <div class="nav-item" :class="{ active: page === 'about' }" @click="page = 'about'" title="关于">
@@ -38,7 +39,8 @@ const page = ref('home')
         <path d="M520 600 L700 460 L900 600 Z" fill="rgba(255,255,255,0.3)" />
       </svg>
     </div>
-    <StatusView v-if="page === 'home'" />
+    <StatusView v-if="page === 'home'" @open-logs-view="page = 'logs'" />
+    <LogView v-else-if="page === 'logs'" />
     <AboutView v-else />
   </div>
 </template>

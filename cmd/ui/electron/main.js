@@ -211,7 +211,7 @@ function createTray() {
         app.setLoginItemSettings({ openAtLogin: item.checked })
       },
     },
-    { type: 'menuseparator' },
+    { type: 'separator' },
     {
       label: '退出',
       click: () => {
