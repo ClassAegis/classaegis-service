@@ -140,15 +140,19 @@ func main() {
 	sup.stopAll()
 }
 
-// resolveConfigPath: -config flag > OCM_CONFIG env > <exe dir>/conf/config.toml.
-func resolveConfigPath(flagVal, binDir string) string {
-	if flagVal != "" {
-		return flagVal
+// resolveConfigPath: -config flag > OCM_CONFIG env > config.toml next to the
+// exe (dev layout) > <install>\conf\config.toml (packaged layout, exe in bin\).
+func resolveConfigPath(configFlag, binDir string) string {
+	if configFlag != "" {
+		return configFlag
 	}
 	if v := os.Getenv("OCM_CONFIG"); v != "" {
 		return v
 	}
-	return filepath.Join(binDir, "conf", "config.toml")
+	if _, err := os.Stat(filepath.Join(binDir, "conf")); err == nil {
+		return filepath.Join(binDir, "conf", "config.toml")
+	}
+	return filepath.Join(binDir, "..", "conf", "config.toml")
 }
 
 // configValid reports whether the config loads and validates.
@@ -201,8 +205,9 @@ func (s *supervisor) start(c *child) {
 		return
 	}
 	cmd := exec.Command(path, c.args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	// Children log to their own files via logx; keep them windowless even
+	// when this launcher runs console-less (GUI subsystem).
+	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: windows.CREATE_NO_WINDOW}
 	if err := cmd.Start(); err != nil {
 		log.Printf("[launcher] start %s failed: %v", c.name, err)
 		return
@@ -218,11 +223,11 @@ func (s *supervisor) start(c *child) {
 }
 
 func (s *supervisor) startUI() {
-	// candidates: dev layout (repo root) > packaged layout (resources/ocm/bin
-	// is three levels under the install root) > electron dev binary.
+	// candidates: packaged layout (<install>\壹课管家\壹课管家.exe, launcher
+	// lives in bin\) > dev repo layout > electron dev binary.
 	candidates := []string{
+		filepath.Join(s.dir, "..", "壹课管家", "壹课管家.exe"),
 		filepath.Join(s.dir, "ui", "壹课管家.exe"),
-		filepath.Join(s.dir, "..", "..", "..", "壹课管家.exe"),
 		filepath.Join(s.dir, "cmd", "ui", "node_modules", "electron", "dist", "electron.exe"),
 	}
 	var uiPath string

@@ -21,3 +21,6 @@ Thumbs.db
 out/
 release/
 **/build/stage/
+
+# installer staging (Electron+Go runtime assembled for NSIS)
+**/installer-stage/

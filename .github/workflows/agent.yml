@@ -36,10 +36,14 @@ jobs:
         run: |
           $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v','' } else { $env:GITHUB_SHA.Substring(0,8) }
           New-Item -ItemType Directory -Force out\bin, out\conf | Out-Null
-          foreach ($t in 'core','worker','agent','launcher','ocmctl') {
+          foreach ($t in 'core','worker','agent','ocmctl') {
             go build -trimpath -ldflags "-s -w" -o "out\bin\$t.exe" "./cmd/$t"
             if ($LASTEXITCODE -ne 0) { exit 1 }
           }
+          # GUI subsystem: double-click / boot autostart must not pop a console window.
+          go build -trimpath -ldflags "-s -w -H windowsgui" -o out\bin\launcher.exe ./cmd/launcher
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
           Copy-Item conf/config.example.toml out/conf/
           Compress-Archive -Path out\bin, out\conf -DestinationPath "out\OneClassMesh-Agent-win64-$v.zip" -Force
           Write-Host "version=$v"
@@ -67,23 +71,38 @@ jobs:
           name: go-bin
           path: stage-dl
 
-      - name: Stage Go runtime and pin version
+      - name: Pin version
         shell: pwsh
         run: |
           $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v','' } else { (Get-Content cmd/ui/package.json | ConvertFrom-Json).version }
           Set-Location cmd/ui
           npm version $v --no-git-tag-version --allow-same-version
-          New-Item -ItemType Directory -Force build\stage\ocm\bin, build\stage\ocm\conf | Out-Null
-          Copy-Item ..\..\stage-dl\bin\*.exe build\stage\ocm\bin\
-          Copy-Item ..\..\stage-dl\conf\config.example.toml build\stage\ocm\conf\
           Write-Host "version=$v"
 
-      - name: Install, build, package
+      - name: Build Electron app (portable dir)
         working-directory: cmd/ui
         run: |
           npm ci --no-audit --no-fund
           npm run build
-          npx electron-builder --win nsis --publish never
+          npx electron-builder --dir --publish never
+
+      - name: Assemble stage (clean root layout)
+        shell: pwsh
+        run: |
+          Set-Location cmd/ui
+          New-Item -ItemType Directory -Force installer-stage\bin, installer-stage\conf | Out-Null
+          Copy-Item release\win-unpacked installer-stage\壹课管家 -Recurse
+          Copy-Item ..\..\stage-dl\bin\*.exe installer-stage\bin\
+          Copy-Item ..\..\stage-dl\conf\config.example.toml installer-stage\conf\
+
+      - name: Build NSIS installer
+        shell: pwsh
+        run: |
+          choco install nsis -y --no-progress
+          $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v','' } else { (Get-Content cmd/ui/package.json | ConvertFrom-Json).version }
+          Set-Location cmd/ui
+          makensis -DVER=$v installer.nsi
+          Get-ChildItem release\*.exe
 
       - uses: actions/upload-artifact@v4
         with:
