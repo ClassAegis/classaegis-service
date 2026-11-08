@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -193,6 +194,20 @@ func logIntegrity(binDir string) {
 	}
 }
 
+// withinDir 判断 path 是否位于 dir 内(clean 后比较,拒绝 .. 逃逸)
+func withinDir(dir, path string) bool {
+	absDir, err1 := filepath.Abs(dir)
+	absPath, err2 := filepath.Abs(path)
+	if err1 != nil || err2 != nil {
+		return false
+	}
+	rel, err := filepath.Rel(absDir, absPath)
+	if err != nil {
+		return false
+	}
+	return rel == "." || (!strings.HasPrefix(rel, "..") && !filepath.IsAbs(rel))
+}
+
 func (s *supervisor) start(c *child) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -202,6 +217,11 @@ func (s *supervisor) start(c *child) {
 	path := filepath.Join(s.dir, c.name)
 	if _, err := os.Stat(path); err != nil {
 		log.Printf("[launcher] %s missing: %v", c.name, err)
+		return
+	}
+	// 只拉起 launcher 自身目录内的可执行文件(路径越界防护)
+	if !withinDir(s.dir, path) {
+		log.Printf("[launcher] %s 路径越界,拒绝拉起: %s", c.name, path)
 		return
 	}
 	cmd := exec.Command(path, c.args...)
@@ -239,6 +259,11 @@ func (s *supervisor) startUI() {
 	}
 	if uiPath == "" {
 		log.Printf("[launcher] ui not found, skip")
+		return
+	}
+	// 只拉起候选目录内的可执行文件(路径越界防护)
+	if !withinDir(s.dir, uiPath) {
+		log.Printf("[launcher] ui 路径越界,拒绝拉起: %s", uiPath)
 		return
 	}
 	go func() {
