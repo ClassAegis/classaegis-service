@@ -3,7 +3,11 @@ agent.exe
 ocmctl.exe
 *.exe
 dist/
-oneclassmesh-agent
+**/dist-tauri/
+**/src-tauri/target/
+classaegis-agent
+.gocache
+.gomodcache
 
 # conf with real credentials
 conf/config.toml
@@ -13,6 +17,8 @@ conf/config.toml
 .vscode/
 Thumbs.db
 .DS_Store
+.mimosa/
+
 
 # Windows rebuild-over-running-exe backup files
 *.exe~
