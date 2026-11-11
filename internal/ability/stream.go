@@ -43,12 +43,18 @@ func (s *streamPlayer) start(payload map[string]any) (map[string]any, string, er
 	if err := validateStreamURL(streamURL); err != nil {
 		return nil, "E_PARAM", err
 	}
+	if raw, exists := payload["volume"]; exists {
+		volume := int(fieldInt(payload, "volume", -1))
+		if _, ok := raw.(string); ok || volume < 0 || volume > 100 {
+			return nil, "E_PARAM", fmt.Errorf("volume must be an integer from 0 to 100")
+		}
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.cmd != nil && s.cmd.Process != nil {
 		return nil, "E_STREAM_ACTIVE", fmt.Errorf("a stream is already playing")
 	}
-	args := []string{"--force-window=immediate", "--terminal=no", "--really-quiet"}
+	args := []string{"--no-config", "--force-window=immediate", "--terminal=no", "--really-quiet"}
 	if fullscreen, ok := payload["fullscreen"].(bool); ok && fullscreen {
 		args = append(args, "--fullscreen")
 	}
@@ -119,5 +125,6 @@ func redactURL(raw string) string {
 		return raw
 	}
 	u.User = nil
+	u.RawQuery = ""
 	return u.String()
 }
