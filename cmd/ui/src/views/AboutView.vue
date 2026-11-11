@@ -26,7 +26,7 @@ onMounted(async () => {
           <circle cx="16.5" cy="24.5" r="2.1" fill="currentColor" /><circle cx="27" cy="18.5" r="2.1" fill="currentColor" /><circle cx="32.4" cy="24.3" r="2.1" fill="currentColor" />
         </svg>
       </div>
-      <div class="identity-copy"><span class="section-label">ClassAegis</span><h2>{{ info.name || '课佑管家' }}</h2><p>校园内网一体化终端代理</p></div>
+      <div class="identity-copy"><span class="section-label">ClassAegis</span><h2>{{ info.name || 'ClassAegisService' }}</h2><p>校园内网一体化终端代理</p></div>
       <div class="identity-version"><span>当前版本</span><strong>{{ info.version || '0.1.0' }}</strong></div>
     </section>
 

@@ -5,7 +5,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $uiRoot = Split-Path -Parent $PSScriptRoot
 $tauriRoot = Join-Path $uiRoot 'src-tauri'
-$buildOutput = Join-Path $uiRoot ("dist-tauri-build-" + [guid]::NewGuid().ToString('N'))
+$buildOutput = Join-Path $env:TEMP ("classaegis-ui-" + [guid]::NewGuid().ToString('N'))
 $userProfile = [Environment]::GetFolderPath('UserProfile')
 
 $cargoPath = (Get-Command cargo -ErrorAction SilentlyContinue).Source
@@ -27,7 +27,7 @@ Push-Location $uiRoot
 try {
   & (Join-Path $PSScriptRoot 'stage-service.ps1')
   if ($LASTEXITCODE -ne 0) { throw 'Service component staging failed' }
-  $env:VITE_OUT_DIR = Split-Path -Leaf $buildOutput
+  $env:VITE_OUT_DIR = $buildOutput
   Push-Location $tauriRoot
   try {
     if ($Dev) {
@@ -44,5 +44,8 @@ try {
   }
 } finally {
   Remove-Item Env:VITE_OUT_DIR -ErrorAction SilentlyContinue
+  if (Test-Path -LiteralPath $buildOutput) {
+    Remove-Item -LiteralPath $buildOutput -Recurse -Force -ErrorAction SilentlyContinue
+  }
   Pop-Location
 }

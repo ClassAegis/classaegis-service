@@ -9,7 +9,7 @@ use tauri::{
     AppHandle, Manager, WebviewWindow,
 };
 
-const APP_NAME: &str = "课佑管家";
+const APP_NAME: &str = "ClassAegisService";
 const CORE_PORT: u16 = 39817;
 
 fn logs_dir() -> PathBuf {
@@ -133,7 +133,7 @@ fn main() {
                     let _ = main_window_for_close.hide();
                 }
             });
-            let show = MenuItem::with_id(app, "show", "显示课佑管家", true, None::<&str>)?;
+            let show = MenuItem::with_id(app, "show", "显示 ClassAegisService", true, None::<&str>)?;
             let separator = PredefinedMenuItem::separator(app)?;
             let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show, &separator, &quit])?;
@@ -143,7 +143,7 @@ fn main() {
             let icon = Image::new_owned(icon_bitmap.into_raw(), icon_width, icon_height);
             TrayIconBuilder::new()
                 .icon(icon)
-                .tooltip("课佑管家 · 后台运行中")
+                .tooltip("ClassAegisService · 后台运行中")
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id().as_ref() {
                     "show" => show_main(app),

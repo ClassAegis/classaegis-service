@@ -132,7 +132,7 @@ jobs:
           cat > notes.md <<'EOF'
           课佑管家 ClassAegisService
 
-          - 课佑管家_*_x64-setup.exe : Tauri NSIS 安装包(显示应用 + Core/Ability/Launcher 运行时)
+          - ClassAegisService_*_x64-setup.exe : Tauri NSIS 安装包(显示应用 + Core/Ability/Launcher 运行时)
           - ClassAegisService-win64-*.zip : 绿色版(5 个 exe + config.example.toml)
 
           安装说明:

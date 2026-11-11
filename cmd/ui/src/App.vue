@@ -17,7 +17,7 @@ const pageMeta = computed(() => navItems.find((item) => item.id === page.value) 
 <template>
   <div class="app-shell">
     <aside class="rail">
-      <div class="rail-brand" title="课佑管家">
+      <div class="rail-brand" title="ClassAegisService">
         <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
           <path d="M24 5.5 39 11v10.8c0 9.7-5.8 16.8-15 21.2-9.2-4.4-15-11.5-15-21.2V11l15-5.5Z" fill="currentColor" opacity=".18" />
           <path d="M24 8.5 36 13v8.7c0 7.9-4.4 13.8-12 17.6-7.6-3.8-12-9.7-12-17.6V13l12-4.5Z" stroke="currentColor" stroke-width="2.4" />
@@ -39,7 +39,7 @@ const pageMeta = computed(() => navItems.find((item) => item.id === page.value) 
 
     <div class="workspace">
       <header class="topbar">
-        <div class="topbar-title"><strong>课佑管家</strong><span>/</span><span>{{ pageMeta.label }}</span></div>
+        <div class="topbar-title"><strong>ClassAegisService</strong><span>/</span><span>{{ pageMeta.label }}</span></div>
         <div class="topbar-actions">
           <span class="protected-chip"><i></i> 本机防护已开启</span>
           <span class="topbar-device"><el-icon :size="14"><Monitor /></el-icon>Windows 终端</span>
@@ -54,7 +54,7 @@ const pageMeta = computed(() => navItems.find((item) => item.id === page.value) 
       </main>
 
       <footer class="workspace-footer">
-        <span>课佑管家</span><span class="footer-divider"></span><span>ClassAegisService</span><span class="footer-spacer"></span><span>协议 v0.1</span>
+        <span>ClassAegisService</span><span class="footer-spacer"></span><span>协议 v0.1</span>
       </footer>
     </div>
   </div>
