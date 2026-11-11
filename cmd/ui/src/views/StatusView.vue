@@ -1,439 +1,169 @@
 <script setup>
-import { onMounted, onUnmounted, computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { CircleCheckFilled, CircleCloseFilled, Connection, Document, FolderOpened, Monitor, Refresh, WarningFilled } from '@element-plus/icons-vue'
 
-// 快捷区「日志查看」:请求 App.vue 切到日志页
 const emit = defineEmits(['open-logs-view'])
-
 const status = ref(null)
 const error = ref('')
 const loaded = ref(false)
+const checking = ref(false)
+const lastChecked = ref(0)
 let timer = null
 
-async function refresh() {
-  const res = await window.ocm.getStatus()
-  if (res.ok) {
-    status.value = res.data
-    error.value = ''
-  } else {
-    status.value = null
-    error.value = res.error || '无法连接核心进程'
-  }
-  loaded.value = true
+async function refreshStatus() {
+  if (checking.value) return
+  checking.value = true
+  try {
+    const res = await window.ocm.getStatus()
+    if (res?.ok) { status.value = res.data; error.value = '' } else { status.value = null; error.value = res?.error || '无法连接核心进程' }
+  } catch (e) { status.value = null; error.value = String((e && e.message) || e || '无法连接核心进程') }
+  finally { loaded.value = true; lastChecked.value = Date.now(); checking.value = false }
 }
 
-onMounted(() => {
-  refresh()
-  timer = setInterval(refresh, 10000)
-})
+onMounted(() => { refreshStatus(); timer = setInterval(refreshStatus, 10000) })
 onUnmounted(() => clearInterval(timer))
 
-// 综合状态:loading(读取中)/ ok(全部正常)/ partial(部分异常)/ offline(核心不可达)
 const phase = computed(() => {
   if (!loaded.value) return 'loading'
   if (error.value || !status.value) return 'offline'
-  if (status.value.connected && status.value.workerAlive) return 'ok'
+  if (status.value.connected && status.value.abilityAlive) return 'ok'
   return 'partial'
 })
 
-// 状态驱动的文案:标题强调色 + 副提示随 phase 切换
-const hero = computed(
-  () =>
-    ({
-      loading: { lead: '壹课管家', accent: '状态读取中', tail: '', hint: '正在连接核心进程,读取守护状态…' },
-      ok: { lead: '壹课管家', accent: '正在守护', tail: '这台电脑', hint: 'MQTT 与业务进程均正常,指令通道畅通。' },
-      partial: { lead: '壹课管家', accent: '部分服务异常', tail: '', hint: '有子系统未就绪,点击「立即自检」定位问题。' },
-      offline: { lead: '壹课管家', accent: '尚未连接', tail: '核心进程', hint: '请确认启动器正在运行;也可打开日志目录排查原因。' },
-    })[phase.value]
-)
+const state = computed(() => ({
+  loading: { tone: 'loading', label: '正在读取运行状态', description: '正在连接本机核心进程。', icon: Refresh },
+  ok: { tone: 'ok', label: '课佑正在保护您的设备', description: '核心进程、连接通道和业务能力均已就绪。', icon: CircleCheckFilled },
+  partial: { tone: 'warning', label: '课佑正在建立保护', description: '有服务还未就绪，请稍后重试或查看安全日志。', icon: WarningFilled },
+  offline: { tone: 'danger', label: '核心进程不可达', description: '请确认课佑管家已启动，或查看安全日志定位问题。', icon: CircleCloseFilled },
+})[phase.value])
 
-const chips = computed(() => {
-  if (phase.value === 'offline') {
-    return [{ label: '核心进程不可达', tone: 'bad' }]
-  }
+const protectedDays = computed(() => (phase.value === 'ok' ? 1 : 0))
+const checkedLabel = computed(() => {
+  if (!lastChecked.value) return '等待检查'
+  const diff = Date.now() - lastChecked.value
+  if (diff < 5000) return '刚刚'
+  if (diff < 60000) return `${Math.floor(diff / 1000)} 秒前`
+  return new Date(lastChecked.value).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+})
+const metrics = computed(() => {
   const s = status.value
+  const offline = phase.value === 'offline'
   return [
-    { label: 'MQTT ' + (s?.connected ? '已连接' : '未连接'), tone: s?.connected ? 'ok' : 'bad' },
-    { label: '业务进程' + (s?.workerAlive ? '运行中' : '未运行'), tone: s?.workerAlive ? 'ok' : 'bad' },
+    { label: '连接通道', value: offline ? '未读取' : s?.connected ? '已连接' : '未连接', note: s?.connected ? 'MQTT 指令通道正常' : '等待 Broker 连接', tone: !offline && s?.connected ? 'ok' : offline ? 'muted' : 'danger', icon: Connection },
+    { label: '业务能力', value: offline ? '未读取' : s?.abilityAlive ? '运行中' : '未运行', note: s?.abilityAlive ? '本地能力已注册' : '等待 ability 启动', tone: !offline && s?.abilityAlive ? 'ok' : offline ? 'muted' : 'danger', icon: Monitor },
+    { label: '服务版本', value: offline ? '未读取' : s?.agentVersion || '—', note: 'ClassAegisService 当前版本', tone: 'neutral', icon: Document },
   ]
 })
-
-// 顶部元信息胶囊;核心不可达时值显示「未读取」而不是裸"—"
-const metaItems = computed(() => {
+const serviceRows = computed(() => {
   const s = status.value
-  const na = phase.value === 'offline' ? '未读取' : '—'
   return [
-    { label: '设备 SN', value: s?.sn || na },
-    { label: '学校', value: s?.schoolCode || na },
-    { label: '协议', value: 'v' + (s?.protocolVersion || '0.1') },
+    { name: 'ClassAegisLauncher', label: '守护进程', detail: '负责启动与重启', tone: loaded.value ? 'ok' : 'loading' },
+    { name: 'ClassAegisCore', label: '核心进程', detail: error.value ? '环回接口不可达' : 'MQTT 与安全验签', tone: error.value ? 'danger' : loaded.value ? 'ok' : 'loading' },
+    { name: 'ClassAegisAbility', label: '业务能力', detail: s?.abilityAlive ? '本地能力已注册' : '等待能力宿主', tone: s?.abilityAlive ? 'ok' : error.value ? 'danger' : 'warning' },
   ]
 })
-
-// 插画状态色:盾牌渐变 id + 屏内徽标底色
-const shieldFill = computed(
-  () =>
-    ({
-      loading: 'url(#shBlue)',
-      ok: 'url(#shGreen)',
-      partial: 'url(#shAmber)',
-      offline: 'url(#shGray)',
-    })[phase.value]
-)
-const badgeFill = computed(
-  () =>
-    ({
-      loading: '#3da4ff',
-      ok: '#0ec66a',
-      partial: '#f59e0b',
-      offline: '#9aa6ba',
-    })[phase.value]
-)
 
 async function selfCheck() {
-  await refresh()
-  if (phase.value === 'ok') {
-    ElMessage.success('自检通过:MQTT 与业务进程均正常')
-  } else if (phase.value === 'partial') {
-    ElMessage.warning('自检发现部分异常,请查看状态卡片')
-  } else {
-    ElMessage.error('自检未通过:核心进程不可达,请确认启动器正在运行')
-  }
+  await refreshStatus()
+  if (phase.value === 'ok') ElMessage.success('检查完成，运行正常')
+  else if (phase.value === 'partial') ElMessage.warning('检查完成，存在异常状态')
+  else ElMessage.error('检查失败，核心进程不可达')
 }
-
-async function openLogs() {
-  await window.ocm.openLogs()
-}
+async function openLogs() { await window.ocm.openLogs() }
 </script>
 
 <template>
-  <div class="page">
-    <div class="hero">
-      <div class="hero-left">
-        <div class="meta">
-          <span class="m-item" v-for="m in metaItems" :key="m.label">
-            <i>{{ m.label }}</i><b>{{ m.value }}</b>
-          </span>
-        </div>
-
-        <h1 class="headline">
-          {{ hero.lead }}<span class="accent" :class="phase">{{ hero.accent }}</span>{{ hero.tail }}
-        </h1>
-        <p class="hint">{{ hero.hint }}</p>
-
-        <div class="status-card">
-          <div class="chip" :class="c.tone" v-for="c in chips" :key="c.label">
-            <i class="dot"></i><span>{{ c.label }}</span>
-          </div>
-        </div>
-
-        <div class="actions">
-          <button class="btn-primary" @click="selfCheck">立即自检</button>
-          <button class="btn-ghost" @click="openLogs">打开日志目录</button>
-        </div>
+  <div class="security-home">
+    <section class="hero-heading">
+      <div>
+        <div class="protected-days">已守护 <strong>{{ protectedDays }}</strong> 天</div>
+        <h1>{{ state.label }}</h1>
+        <p>{{ state.description }}</p>
       </div>
-
-      <div class="hero-art" aria-hidden="true">
-        <svg viewBox="0 0 380 250">
-          <defs>
-            <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#ffffff" />
-              <stop offset="1" stop-color="#e9f3fe" />
-            </linearGradient>
-            <linearGradient id="shBlue" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#3da4ff" />
-              <stop offset="1" stop-color="#2196f3" />
-            </linearGradient>
-            <linearGradient id="shGreen" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#14d479" />
-              <stop offset="1" stop-color="#07b158" />
-            </linearGradient>
-            <linearGradient id="shAmber" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#ffb02e" />
-              <stop offset="1" stop-color="#f08c00" />
-            </linearGradient>
-            <linearGradient id="shGray" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#b6c0d2" />
-              <stop offset="1" stop-color="#8e9bb3" />
-            </linearGradient>
-            <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#2c3144" flood-opacity="0.16" />
-            </filter>
-          </defs>
-
-          <!-- 背景光晕 -->
-          <circle cx="185" cy="112" r="98" fill="rgba(255,255,255,0.55)" />
-          <circle cx="318" cy="52" r="34" fill="rgba(255,255,255,0.5)" />
-
-          <!-- 显示器 -->
-          <rect x="40" y="22" width="232" height="150" rx="16" fill="url(#screen)" stroke="#b9d9f8" stroke-width="1.5" filter="url(#soft)" />
-          <rect x="54" y="36" width="204" height="122" rx="10" fill="#f6faff" />
-          <circle cx="156" cy="74" r="15" :fill="badgeFill" />
-          <!-- 徽标图形随状态切换:正常/读取=对勾,部分异常=叹号,离线=横线 -->
-          <path v-if="phase === 'ok' || phase === 'loading'" d="M149 74 l5 5 l10 -11" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
-          <path v-else-if="phase === 'partial'" d="M156 66 v10" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" />
-          <circle v-else-if="phase === 'partial'" cx="156" cy="80.5" r="1.9" fill="#fff" />
-          <path v-else d="M149 74 h14" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" />
-          <rect x="114" y="102" width="84" height="7" rx="3.5" fill="#dceaf8" />
-          <rect x="126" y="115" width="60" height="7" rx="3.5" fill="#e6f0fb" />
-          <rect x="146" y="172" width="20" height="14" fill="#c8dcf2" />
-          <rect x="118" y="186" width="76" height="9" rx="4.5" fill="#b3cde9" />
-
-          <!-- 地面阴影 -->
-          <ellipse cx="190" cy="228" rx="112" ry="8" fill="rgba(44,49,68,0.07)" />
-
-          <!-- 盾牌(状态着色,叠于显示器右下) -->
-          <path d="M262 106 h76 v34 c0 30 -17 46 -38 56 c-21 -10 -38 -26 -38 -56 Z" :fill="shieldFill" filter="url(#soft)" />
-          <path d="M283 143 l13 13 l24 -27" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
-
-          <!-- 点缀 -->
-          <circle cx="354" cy="30" r="6" fill="rgba(255,255,255,0.9)" />
-          <circle cx="24" cy="196" r="8" fill="rgba(255,255,255,0.7)" />
-          <circle cx="342" cy="210" r="4" fill="rgba(61,164,255,0.35)" />
-        </svg>
+      <div class="hero-actions">
+        <button type="button" class="scan-button" :disabled="checking" @click="selfCheck"><el-icon :class="{ spinning: checking }"><Refresh /></el-icon>{{ checking ? '检查中' : '立即检查' }}</button>
+        <button type="button" class="scan-more" title="查看安全日志" @click="emit('open-logs-view')">⌄</button>
       </div>
-    </div>
+    </section>
 
-    <div class="quickbar">
-      <div class="quick" @click="openLogs">
-        <div class="q-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 7 a2 2 0 0 1 2 -2 h4 l2 2 h8 a2 2 0 0 1 2 2 v9 a2 2 0 0 1 -2 2 H5 a2 2 0 0 1 -2 -2 Z" />
-          </svg>
-        </div>
-        <div class="q-label">日志目录</div>
-      </div>
-      <div class="quick" title="查看运行日志" @click="emit('open-logs-view')">
-        <div class="q-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 3 h9 l4 4 v14 H6 Z" />
-            <path d="M9 11 h6 M9 15 h6" />
-          </svg>
-        </div>
-        <div class="q-label">日志查看</div>
-      </div>
-      <div class="quick disabled" title="M2 提供">
-        <div class="q-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 16 V8 M8.5 11.5 L12 8 l3.5 3.5" />
-          </svg>
-        </div>
-        <div class="q-label">检查更新</div>
-      </div>
-    </div>
+    <section class="hero-visual" aria-label="课佑守护状态">
+      <svg class="circuit-art" viewBox="0 0 740 330" fill="none" aria-hidden="true">
+        <g stroke="#76552b" stroke-width="1.2" opacity=".7">
+          <path d="M20 270h115l45-44h100l43-48h126l44-58h85l48-42h90" /><path d="M45 305h115l42-32h128l38-47h90l42-40h112l41-31h80" />
+          <path d="M180 10v52l50 47v53l72 70v65" /><path d="M300 18v44l42 42v39l72 66v65" /><path d="M486 4v45l-37 37v47l-47 47" />
+        </g>
+        <g fill="#b17b34" opacity=".8"><circle cx="135" cy="270" r="4"/><circle cx="280" cy="178" r="4"/><circle cx="449" cy="120" r="4"/><circle cx="583" cy="79" r="4"/><circle cx="160" cy="273" r="4"/><circle cx="429" cy="226" r="4"/></g>
+        <g fill="#343638" stroke="#76552b" stroke-width="1"><rect x="74" y="233" width="54" height="31"/><rect x="544" y="26" width="66" height="39"/><rect x="610" y="214" width="75" height="42"/><rect x="365" y="257" width="56" height="31"/></g>
+        <path d="M489 51 598 93v78c0 82-42 131-109 169-67-38-109-87-109-169V93l109-42Z" fill="#242628" stroke="#b17b34" stroke-width="3" />
+        <path d="M489 72 573 105v65c0 67-31 108-84 141-53-33-84-74-84-141v-65l84-33Z" fill="#2f3132" stroke="#e1a34e" stroke-width="2" />
+        <path d="M432 164h43l32-41 35 43h15" stroke="#e3a24b" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="432" cy="164" r="11" fill="#e3a24b"/><circle cx="507" cy="123" r="11" fill="#e3a24b"/><circle cx="557" cy="166" r="11" fill="#7bcda6"/>
+      </svg>
+      <div class="hero-status-badge" :class="state.tone"><el-icon><component :is="state.icon" /></el-icon><span>{{ phase === 'ok' ? '实时防护中' : phase === 'loading' ? '正在检查' : '需要关注' }}</span></div>
+    </section>
 
-    <div class="verline">版本 0.1.0 · 协议 0.1 · OneClassMesh 壹课互联</div>
+    <section class="quick-grid" aria-label="快捷入口">
+      <button type="button" class="quick-tile" @click="selfCheck"><span class="tile-icon"><el-icon><Refresh /></el-icon></span><span><strong>立即检查</strong><small>刷新本机防护状态</small></span></button>
+      <button type="button" class="quick-tile" @click="emit('open-logs-view')"><span class="tile-icon"><el-icon><Document /></el-icon></span><span><strong>安全日志</strong><small>查看核心与能力记录</small></span></button>
+      <button type="button" class="quick-tile" @click="openLogs"><span class="tile-icon"><el-icon><FolderOpened /></el-icon></span><span><strong>打开日志目录</strong><small>在资源管理器中查看</small></span></button>
+      <div class="quick-summary"><span>上次检查</span><strong>{{ checkedLabel }}</strong><small>{{ status?.sn || '设备信息待读取' }}</small></div>
+    </section>
+
+    <section class="service-strip">
+      <div class="strip-title"><span>服务状态</span><strong>三层防护链路</strong></div>
+      <div v-for="row in serviceRows" :key="row.name" class="service-row"><i :class="row.tone"></i><span><strong>{{ row.name }}</strong><small>{{ row.label }} · {{ row.detail }}</small></span><b :class="row.tone">{{ row.tone === 'ok' ? '正常' : row.tone === 'danger' ? '异常' : '等待' }}</b></div>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.page {
-  position: relative;
-  min-height: calc(100vh - 96px);
-  display: flex;
-  flex-direction: column;
-}
-.hero {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
-.hero-left {
-  flex: 1;
-  z-index: 1;
-}
+.security-home { max-width: 1120px; margin: 0 auto; }
+.hero-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.protected-days { color: var(--ink-soft); font-size: 17px; }
+.protected-days strong { color: var(--accent); font-size: 21px; font-weight: 500; }
+.hero-heading h1 { margin: 11px 0 8px; color: var(--ink); font-size: 28px; line-height: 1.2; font-weight: 600; letter-spacing: 0; }
+.hero-heading p { margin: 0; color: var(--slate); font-size: 12px; }
+.hero-actions { display: flex; align-items: stretch; }
+.scan-button, .scan-more { border: 0; background: var(--accent); color: #2d2419; cursor: pointer; font-size: 15px; }
+.scan-button { display: inline-flex; align-items: center; gap: 9px; min-width: 145px; min-height: 42px; padding: 0 19px; font-weight: 700; }
+.scan-button { border-radius: 8px 0 0 8px; }
+.scan-button:hover:not(:disabled) { background: #edb15d; }
+.scan-button:disabled { cursor: wait; opacity: .65; }
+.scan-more { width: 34px; border-left: 1px solid rgba(45, 36, 25, .25); border-radius: 0 8px 8px 0; font-family: 'Segoe UI', sans-serif; font-size: 21px; }
+.hero-visual { position: relative; min-height: 286px; margin-top: 16px; overflow: hidden; border: 1px solid #3c3d3e; border-radius: 12px; background: #242526; }
+.circuit-art { display: block; width: 100%; height: 286px; }
+.hero-status-badge { position: absolute; right: 12px; bottom: 11px; display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid #4a4b4c; background: rgba(32, 33, 34, .88); color: var(--slate); font-size: 10px; }
+.hero-status-badge.ok { border-color: rgba(108, 196, 154, .45); color: var(--ok); }
+.hero-status-badge.warning { border-color: rgba(227, 162, 75, .45); color: var(--warning); }
+.hero-status-badge.danger { border-color: rgba(225, 107, 101, .45); color: var(--danger); }
+.quick-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 1.2fr; gap: 12px; margin-top: 4px; }
+.quick-tile { display: flex; align-items: center; gap: 12px; min-height: 78px; padding: 14px 15px; border: 1px solid #3d3e3f; border-radius: 9px; background: var(--surface); color: var(--ink); cursor: pointer; text-align: left; transition: border-color .15s ease, background .15s ease, transform .15s ease; }
+.quick-tile:hover { border-color: #665232; background: var(--surface-raised); }
+.tile-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px; border: 1px solid #56504a; border-radius: 50%; color: var(--accent); }
+.quick-tile > span:last-child { display: grid; gap: 4px; min-width: 0; }
+.quick-tile strong { color: var(--ink-soft); font-size: 12px; }
+.quick-tile small { color: var(--muted); font-size: 10px; }
+.quick-summary { display: grid; align-content: center; gap: 5px; padding: 14px 16px; border: 1px solid #3d3e3f; border-radius: 9px; background: var(--surface-soft); color: var(--muted); font-size: 10px; }
+.quick-summary strong { color: var(--ink-soft); font-family: 'Segoe UI', sans-serif; font-size: 14px; font-weight: 500; }
+.quick-summary small { overflow: hidden; color: #686966; text-overflow: ellipsis; white-space: nowrap; }
+.service-strip { display: grid; grid-template-columns: 1.2fr repeat(3, 1fr); align-items: center; gap: 0; margin-top: 24px; border: 1px solid #3c3d3e; border-radius: 10px; background: rgba(39, 40, 41, .65); overflow: hidden; }
+.strip-title { display: grid; gap: 4px; padding: 13px 16px 13px 0; }
+.strip-title span { color: var(--accent); font-size: 10px; }
+.strip-title strong { color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.service-row { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 60px; padding: 10px 12px; border-left: 1px solid #3c3d3e; }
+.service-row > i { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--muted); }
+.service-row > i.ok { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
+.service-row > i.warning { background: var(--warning); box-shadow: 0 0 0 3px var(--warning-soft); }
+.service-row > i.danger { background: var(--danger); box-shadow: 0 0 0 3px var(--danger-soft); }
+.service-row > span { display: grid; gap: 3px; min-width: 0; }
+.service-row strong { overflow: hidden; color: var(--ink-soft); font-family: Consolas, 'Cascadia Mono', monospace; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.service-row small { overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.service-row b { margin-left: auto; color: var(--muted); font-size: 9px; font-weight: 500; }
+.service-row b.ok { color: var(--ok); }.service-row b.warning { color: var(--warning); }.service-row b.danger { color: var(--danger); }
+.spinning { animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* 元信息胶囊 */
-.meta {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 18px;
-}
-.m-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  background: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 999px;
-  font-size: 12px;
-  color: var(--text-mid);
-}
-.m-item i {
-  font-style: normal;
-  color: var(--muted);
-}
-.m-item b {
-  color: var(--text-strong);
-  font-weight: 600;
-}
-
-.headline {
-  margin: 0 0 10px;
-  font-size: 33px;
-  font-weight: 700;
-  color: var(--text-strong);
-  letter-spacing: 0.5px;
-}
-.accent {
-  margin: 0 5px;
-}
-.accent.loading,
-.accent.ok {
-  background: linear-gradient(120deg, #3da4ff, #2196f3);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.accent.partial {
-  color: #f08c00;
-}
-.accent.offline {
-  color: #8e9bb3;
-}
-.hint {
-  margin: 0 0 22px;
-  font-size: 13.5px;
-  color: var(--text-mid);
-}
-
-/* 状态胶囊卡 */
-.status-card {
-  display: inline-flex;
-  gap: 10px;
-  padding: 9px;
-  background: var(--card);
-  border-radius: 16px;
-  box-shadow: 0 6px 22px rgba(44, 49, 68, 0.08);
-  margin-bottom: 26px;
-}
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 7px 14px;
-  border-radius: 10px;
-}
-.chip.ok {
-  background: #e5f9ee;
-  color: #0a9d4f;
-}
-.chip.bad {
-  background: #fdeaea;
-  color: #d64541;
-}
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-.chip.ok .dot {
-  background: #0ec66a;
-  box-shadow: 0 0 6px rgba(14, 198, 106, 0.55);
-}
-.chip.bad .dot {
-  background: #eb4240;
-}
-
-.actions {
-  display: flex;
-  gap: 14px;
-}
-.btn-primary {
-  padding: 12px 34px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #fff;
-  border: none;
-  border-radius: 24px;
-  cursor: pointer;
-  background: linear-gradient(135deg, #3da4ff, #2196f3);
-  box-shadow: 0 8px 20px rgba(61, 164, 255, 0.4);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 26px rgba(61, 164, 255, 0.5);
-}
-.btn-ghost {
-  padding: 12px 22px;
-  font-size: 14px;
-  color: var(--text-mid);
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid #cfe4f8;
-  border-radius: 24px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-ghost:hover {
-  color: var(--primary-deep);
-  border-color: var(--primary);
-  background: #fff;
-}
-
-.hero-art {
-  flex: none;
-  width: 400px;
-  z-index: 1;
-}
-.hero-art svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.quickbar {
-  display: flex;
-  gap: 44px;
-  justify-content: center;
-  padding: 12px 0 2px;
-}
-.quick {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-.quick:hover {
-  transform: translateY(-2px);
-}
-.quick.disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
-}
-.q-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: var(--primary-deep);
-  background: var(--card);
-  box-shadow: 0 4px 14px rgba(44, 49, 68, 0.1);
-  transition: box-shadow 0.15s ease;
-}
-.quick:hover .q-icon {
-  box-shadow: 0 8px 20px rgba(61, 164, 255, 0.28);
-}
-.q-icon svg {
-  width: 21px;
-  height: 21px;
-}
-.q-label {
-  font-size: 12px;
-  color: var(--text-mid);
-}
-.verline {
-  text-align: center;
-  font-size: 11.5px;
-  color: var(--muted);
-  padding: 10px 0 2px;
-}
+@media (max-width: 900px) { .quick-grid { grid-template-columns: repeat(3, 1fr); }.quick-summary { grid-column: 1 / -1; border-top: 1px solid #3d3e3f; border-left: 0; }.service-strip { grid-template-columns: 1fr 1fr; }.strip-title { grid-column: 1 / -1; padding: 12px 0; }.service-row:nth-child(2) { border-left: 0; } }
+@media (max-width: 640px) { .hero-heading { align-items: flex-start; flex-direction: column; }.hero-actions { width: 100%; }.scan-button { flex: 1; }.hero-visual { min-height: 218px; }.circuit-art { height: 218px; }.quick-grid, .service-strip { grid-template-columns: 1fr; }.quick-summary { grid-column: auto; border-top: 1px solid #3d3e3f; }.service-row { border-top: 1px solid #3c3d3e; border-left: 0; }.strip-title { grid-column: auto; } }
 </style>

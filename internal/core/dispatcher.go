@@ -7,11 +7,12 @@ import (
 )
 
 // Executor performs one verified command. Implemented by the loopback IPC
-// executor (core -> worker) and by the all-in-one debug executor (in-process).
+// executor (core -> ability) and by the all-in-one debug executor (in-process).
 type Executor interface {
 	// Execute runs the command; returns ok=true on success, or code/message
 	// describing the failure (E_PLATFORM_UNSUPPORTED, E_FAILED, ...).
-	Execute(msgId, msgType string, payload map[string]any) (ok bool, code string, message string)
+	// result carries command-specific data for the receipt result field.
+	Execute(msgId, msgType string, payload map[string]any) (ok bool, code string, message string, result map[string]any)
 }
 
 // Dispatcher runs the command pipeline:
@@ -34,9 +35,9 @@ func NewDispatcher(
 
 // ExecutorFunc adapts a plain function to the Executor interface
 // (used by the all-in-one debug mode).
-type ExecutorFunc func(msgId, msgType string, payload map[string]any) (ok bool, code string, message string)
+type ExecutorFunc func(msgId, msgType string, payload map[string]any) (ok bool, code string, message string, result map[string]any)
 
-func (f ExecutorFunc) Execute(msgId, msgType string, payload map[string]any) (bool, string, string) {
+func (f ExecutorFunc) Execute(msgId, msgType string, payload map[string]any) (bool, string, string, map[string]any) {
 	return f(msgId, msgType, payload)
 }
 
@@ -81,9 +82,9 @@ func (d *Dispatcher) OnCommand(raw string) {
 	d.receipt(msgId, "EXECUTING", nil, "", "")
 
 	payload, _ := msg["payload"].(map[string]any)
-	ok, code, message := d.executor.Execute(msgId, msgType, payload)
+	ok, code, message, result := d.executor.Execute(msgId, msgType, payload)
 	if ok {
-		d.receipt(msgId, "SUCCESS", nil, "", "")
+		d.receipt(msgId, "SUCCESS", result, "", "")
 		return
 	}
 	d.seen.Remove(msgId)

@@ -137,7 +137,7 @@ fn main() {
             let separator = PredefinedMenuItem::separator(app)?;
             let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show, &separator, &quit])?;
-            let icon_bytes = include_bytes!("../../electron/assets/tray-32.png");
+            let icon_bytes = include_bytes!("../../build/icons/32x32.png");
             let icon_bitmap = image::load_from_memory(icon_bytes)?.to_rgba8();
             let (icon_width, icon_height) = icon_bitmap.dimensions();
             let icon = Image::new_owned(icon_bitmap.into_raw(), icon_width, icon_height);

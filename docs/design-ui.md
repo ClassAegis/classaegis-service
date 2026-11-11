@@ -1,84 +1,43 @@
-# 壹课管家 · 显示应用(Electron)M0 设计文档
+# 课佑管家桌面 UI
 
-| 项 | 值 |
-|---|---|
-| 仓库 | oneclassmesh-agent(cmd/ui/) |
-| 定位 | 壹课管家的图形界面:本机状态可视化 + 激活引导 + 日志查看。**不是管理台**(管理台在集控端) |
-| 技术栈 | Electron + Vue 3 + TypeScript + Element Plus + Vite + electron-builder |
-| 安全边界 | 仅连 127.0.0.1:39817(core 环回 API),X-Ocm-Token 认证;无外网访问 |
-| 状态 | 设计定稿 |
-| 更新 | 2026-11-07 |
+## 产品定位
 
-## 0. 为什么 Electron 而不是 Wails/Fyne
+课佑管家是常驻在 Windows 终端上的本地服务界面，展示设备状态、安全日志和产品信息，并通过系统托盘保持后台运行。Core、Ability 和 Launcher 继续由 Go 实现，UI 不直接创建或终止这些后台进程。
 
-用户选定 Electron。如实评估:界面自由度高、Web 技术栈、生态成熟、UOS/麒麟可运行;代价是体积(安装包 ~85MB)与内存(空载 ~150MB)。它是**用户主动打开**的应用,非常驻,代价可接受。安全红线:渲染进程零 Node 能力(contextIsolation),唯一数据源是 core 环回 API。
+## 技术栈
 
-## 1. 架构
-
-```
-┌─────────────────────────────────────────────┐
-│ Electron 显示应用(壹课管家 UI)              │
-│ ┌─────────────┐  IPC(contextBridge)  ┌────┐ │
-│ │ Renderer    │◄────────────────────►│Main│ │
-│ │ Vue 3 页面  │                       │Node│ │
-│ └─────────────┘                       └──┬─┘ │
-└──────────────────────────────────────────────┼─┘
-                                               │ HTTP 127.0.0.1:39817 + X-Ocm-Token
-┌──────────────────────────────────────────────▼─┐
-│ core.exe(核心进程)/status /activate(未来)     │
-└─────────────────────────────────────────────────┘
-```
-
-- main(Node):读 conf/config.toml 拿 ipc_token;持 token 调 core API;文件日志读取
-- preload:contextBridge 暴露最小 API(getStatus/openLogs),不开 nodeIntegration
-- renderer:Vue 3 + Element Plus,只渲染数据
-
-## 2. 页面设计(M0 三页 + 关于)
-
-| 页面 | 内容 | 数据源 |
+| 层 | 技术 | 职责 |
 |---|---|---|
-| ① 状态仪表 | 设备 SN / 学校码 / MQTT 连接状态 / worker 存活 / agent 版本 / 协议版本;10s 轮询刷新 | GET /status |
-| ② 激活向导 | M0:提示"当前为手动录入模式"+展示 config.toml 路径;M1:输入激活码 → core /activate | 静态 + /activate(M1) |
-| ③ 日志 | 查看 %ProgramData%\oneclassmesh\logs\core.log / worker.log(分页/刷新) | main 进程读文件 |
-| ④ 关于 | 产品名/版本/协议版本/开源协议/License | 静态 |
+| 桌面外壳 | Tauri 2 / Rust | 单实例、窗口、托盘、日志文件访问和 NSIS 安装包 |
+| 页面 | Vue 3 / JavaScript / Element Plus / Vite | 总览、日志、关于页面 |
+| 后台服务 | Go | Launcher 生命周期管理、Core 通信和 Ability 执行 |
+| 本地桥接 | Tauri commands | 固定状态查询、日志枚举与读取、窗口控制 |
 
-## 3. 核心侧配套改造(前置)
+UI 通过 `127.0.0.1:39817` 访问 Core 状态接口，令牌只由桌面外壳读取配置并使用。渲染层不开放任意 shell、文件路径或进程控制能力。
 
-1. **文件日志**:core/worker 目前只打 stdout;新增 internal/core/logx:落盘 `%ProgramData%\oneclassmesh\logs\core.log`(200KB×5 轮转),worker 同理 worker.log —— UI 日志页数据源
-2. /status 已具备;M1 加 /activate(激活码换凭证,写回 config)
+## 页面结构
 
-## 4. 目录与构建
+- 总览：服务状态、设备身份、连接状态和快速进入日志的操作。
+- 安全日志：查看 Core 与 Ability 的本机日志，可刷新、复制和打开日志目录。
+- 关于：产品名、版本、协议和配置路径。
 
-```
-cmd/ui/
-├─ electron/
-│  ├─ main.ts          main 进程:窗口/托盘/读配置/调 core API/读日志文件
-│  └─ preload.ts       contextBridge 暴露 getStatus/readLogs/getAppInfo
-├─ src/
-│  ├─ App.vue          布局(侧边导航:状态/激活/日志/关于)
-│  ├─ views/Status.vue │ Activation.vue │ Logs.vue │ About.vue
-│  └─ api/index.ts     类型与请求封装(经 preload 桥)
-├─ electron-builder.yml  NSIS 打包配置
-└─ package.json
-```
+窗口关闭时隐藏到托盘；托盘菜单可恢复窗口或退出 UI。UI 退出不会强制结束由 Launcher 管理的后台服务。
 
-构建链:pnpm + vite(渲染层)+ electron-builder(整体 NSIS);产物 `壹课管家-Setup-0.1.0.exe`(~85MB);M2 加 electron-updater 自动更新。
+## 构建与安装
 
-## 5. 安全清单
+在 `cmd/ui` 执行 `npm run dev` 启动 Vite 开发页面，执行 `npm run tauri:dev` 启动桌面开发版，执行 `npm run dist` 构建 NSIS 安装包。安装包由 `build/stage-service.ps1` 构建并校验以下组件：
 
-- contextIsolation: true / nodeIntegration: false / sandbox: true
-- 渲染层 CSP:default-src 'self';connect-src 'self'
-- main 进程仅允许 http://127.0.0.1:39817 出站;拒绝一切其他目标
-- token 只存在 main 进程内存,不进渲染层
+- `ClassAegisCore.exe`
+- `ClassAegisAbility.exe`
+- `ClassAegisLauncher.exe`
+- `ClassAegisCtl.exe`
+- `ClassAegisDebug.exe`
+- `conf/config.example.toml`
 
-## 6. 里程碑
+安装程序使用 Tauri 默认 NSIS 配置。
 
-- UI-M0(本次):脚手架 + 状态仪表(读 /status)+ 关于页;联调需 core 运行
-- UI-M1:激活向导(接 /activate)+ 日志页(需 core/worker 文件日志先行)+ 托盘常驻
-- UI-M2:自动更新(electron-updater)+ 深浅主题
+Windows 构建环境需要 Go、Rust stable、MSVC Build Tools、NSIS 和 WebView2。Tauri 使用系统 WebView2 运行 UI，安装器按配置引导 WebView2 bootstrapper。
 
-## 7. 风险
+## 当前范围
 
-- WebView2/Chromium 在老 Win10 的兼容:electron-builder NSIS 自带运行时,Win10 1809+ 无虞
-- 轮询 10s 对 core 压力可忽略(单机一 UI)
-- Electron 在信创 ARM/loong64 的构建矩阵:M2 评估;必要时 UI 改 Web 模式(浏览器直开)
+系统托盘和服务状态桥接已接入。多显示器卡片与系统通知仍需先确定事件来源、敏感字段过滤、显示器选择和通知过期策略，再接入页面。

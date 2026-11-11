@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "updated": "2026-11-08T00:00:00Z",
+  "source": "oneclassmesh-seed",
+  "block": [
+    {
+      "process": "ocm-test-popup.exe",
+      "title": "*推广*",
+      "action": "close",
+      "note": "联调测试规则:把任意 exe 复制改名为 ocm-test-popup.exe 并弹一个标题含「推广」的窗口即可验证(例如用 PowerShell 弹 MessageBox)"
+    }
+  ],
+  "whitelist": []
+}

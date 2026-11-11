@@ -1,5 +1,5 @@
-// launcher is the OneClassMesh agent guardian (壹课管家启动器/守护者).
-// Desktop shortcut target. Starts worker + core, watches them, restarts on
+// launcher is the ClassAegis agent guardian (课佑管家启动器/守护者).
+// Desktop shortcut target. Starts ability + core, watches them, restarts on
 // crash with exponential backoff. Future Windows-service host (M1).
 package main
 
@@ -25,7 +25,7 @@ import (
 	"github.com/OneClassMesh/oneclassmesh-agent/internal/core/logx"
 )
 
-const mutexName = `Local\OneClassMesh.Launcher`
+const mutexName = `Local\ClassAegis.Launcher`
 
 type child struct {
 	name      string
@@ -81,7 +81,7 @@ type supervisor struct {
 	stop    bool
 	bin     string
 	core    *child
-	worker  *child
+	ability *child
 	ui      *exec.Cmd
 }
 
@@ -112,8 +112,8 @@ func main() {
 	log.Printf("[launcher] started, dir=%s config=%s", binDir, cfgPath)
 
 	sup := &supervisor{dir: binDir, config: cfgPath, withUI: *withUI, bin: binDir}
-	sup.worker = &child{name: "worker.exe", args: []string{"-config", cfgPath}}
-	sup.core = &child{name: "core.exe", args: []string{"-config", cfgPath}}
+	sup.ability = &child{name: "ClassAegisAbility.exe", args: []string{"-config", cfgPath}}
+	sup.core = &child{name: "ClassAegisCore.exe", args: []string{"-config", cfgPath}}
 
 	// A fresh install ships no valid config.toml yet. Instead of letting
 	// core crash-loop, wait until the config validates, then bring the
@@ -121,7 +121,7 @@ func main() {
 	ready := configValid(cfgPath)
 	if ready {
 		logIntegrity(binDir)
-		sup.start(sup.worker)
+		sup.start(sup.ability)
 		time.Sleep(500 * time.Millisecond)
 		sup.start(sup.core)
 	} else {
@@ -183,7 +183,7 @@ func createMutex() (windows.Handle, error) {
 
 // logIntegrity records SHA256 of the critical binaries at boot.
 func logIntegrity(binDir string) {
-	for _, name := range []string{"core.exe", "worker.exe"} {
+	for _, name := range []string{"ClassAegisCore.exe", "ClassAegisAbility.exe"} {
 		p := filepath.Join(binDir, name)
 		sum, err := fileSHA256(p)
 		if err != nil {
@@ -243,12 +243,17 @@ func (s *supervisor) start(c *child) {
 }
 
 func (s *supervisor) startUI() {
-	// candidates: packaged layout (<install>\壹课管家\壹课管家.exe, launcher
-	// lives in bin\) > dev repo layout > electron dev binary.
+	// candidates: packaged layout (<install>\课佑管家\ClassAegisService.exe, launcher
+	// lives in bin\) followed by development layouts.
 	candidates := []string{
+		filepath.Join(s.dir, "..", "ClassAegisService.exe"),
+		filepath.Join(s.dir, "..", "课佑管家", "ClassAegisService.exe"),
+		filepath.Join(s.dir, "..", "课佑管家", "课佑管家.exe"),
+		filepath.Join(s.dir, "..", "守界管家", "守界管家.exe"),
 		filepath.Join(s.dir, "..", "壹课管家", "壹课管家.exe"),
+		filepath.Join(s.dir, "ui", "课佑管家.exe"),
+		filepath.Join(s.dir, "ui", "守界管家.exe"),
 		filepath.Join(s.dir, "ui", "壹课管家.exe"),
-		filepath.Join(s.dir, "cmd", "ui", "node_modules", "electron", "dist", "electron.exe"),
 	}
 	var uiPath string
 	for _, p := range candidates {
@@ -296,13 +301,13 @@ func (s *supervisor) watch() {
 			ready = true
 			log.Printf("[launcher] configuration ready, starting children")
 			logIntegrity(s.dir)
-			s.start(s.worker)
+			s.start(s.ability)
 			time.Sleep(500 * time.Millisecond)
 			s.start(s.core)
 			continue
 		}
 
-		for _, c := range []*child{s.worker, s.core} {
+		for _, c := range []*child{s.ability, s.core} {
 			if !c.alive() {
 				c.mu.Lock()
 				delay := c.nextDelay
@@ -321,7 +326,7 @@ func (s *supervisor) stopAll() {
 	s.mu.Lock()
 	s.stop = true
 	s.mu.Unlock()
-	for _, c := range []*child{s.core, s.worker} {
+	for _, c := range []*child{s.core, s.ability} {
 		c.mu.Lock()
 		if c.running && c.cmd != nil && c.cmd.Process != nil {
 			_ = c.cmd.Process.Kill()

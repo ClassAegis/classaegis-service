@@ -5,6 +5,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $uiRoot = Split-Path -Parent $PSScriptRoot
 $tauriRoot = Join-Path $uiRoot 'src-tauri'
+$buildOutput = Join-Path $uiRoot ("dist-tauri-build-" + [guid]::NewGuid().ToString('N'))
 $userProfile = [Environment]::GetFolderPath('UserProfile')
 
 $cargoPath = (Get-Command cargo -ErrorAction SilentlyContinue).Source
@@ -14,23 +15,28 @@ if (-not $cargoPath) {
 if (-not (Test-Path -LiteralPath $cargoPath)) {
   throw 'cargo not found; install Rust stable, MSVC Build Tools, and WebView2 Runtime.'
 }
-$tauriPath = (Get-Command tauri -ErrorAction SilentlyContinue).Source
-if (-not $tauriPath) {
-  $tauriPath = "$userProfile\.cargo\bin\cargo-tauri.exe"
-}
+$cargoBin = Split-Path -Parent $cargoPath
+$tauriPath = (Get-Command cargo-tauri -ErrorAction SilentlyContinue).Source
+if (-not $tauriPath) { $tauriPath = Join-Path $cargoBin 'cargo-tauri.exe' }
+if (-not (Test-Path -LiteralPath $tauriPath)) { $tauriPath = Join-Path $userProfile '.cargo\bin\cargo-tauri.exe' }
 if (-not (Test-Path -LiteralPath $tauriPath)) {
   throw 'Tauri CLI not found; run cargo install tauri-cli --version ^2.'
 }
 
 Push-Location $uiRoot
 try {
-  $env:VITE_OUT_DIR = 'dist-tauri'
+  & (Join-Path $PSScriptRoot 'stage-service.ps1')
+  if ($LASTEXITCODE -ne 0) { throw 'Service component staging failed' }
+  $env:VITE_OUT_DIR = Split-Path -Leaf $buildOutput
   Push-Location $tauriRoot
   try {
     if ($Dev) {
       & $tauriPath dev
     } else {
-      & $tauriPath build --config tauri.conf.json
+      $overridePath = Join-Path $env:TEMP 'classaegis-tauri-build.json'
+      $override = @{ build = @{ frontendDist = $buildOutput } } | ConvertTo-Json -Compress
+      Set-Content -LiteralPath $overridePath -Value $override -Encoding UTF8
+      & $tauriPath build --config tauri.conf.json --config $overridePath
     }
     if ($LASTEXITCODE -ne 0) { throw 'Tauri build failed' }
   } finally {

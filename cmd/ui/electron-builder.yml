@@ -1,9 +1,0 @@
-appId: io.github.oneclassmesh.agent.ui
-productName: 壹课管家
-copyright: Apache-2.0
-directories:
-  output: release
-files:
-  - electron/**/*
-  - dist/**/*
-  - package.json

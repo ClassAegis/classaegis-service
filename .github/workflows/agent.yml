@@ -1,4 +1,4 @@
-name: agent-build
+name: classaegis-service-build
 
 on:
   push:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build-go:
-    name: Go agent (windows x64)
+    name: ClassAegisService runtime (windows x64)
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,16 +36,22 @@ jobs:
         run: |
           $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v','' } else { $env:GITHUB_SHA.Substring(0,8) }
           New-Item -ItemType Directory -Force out\bin, out\conf | Out-Null
-          foreach ($t in 'core','worker','agent','ocmctl') {
-            go build -trimpath -ldflags "-s -w" -o "out\bin\$t.exe" "./cmd/$t"
+          $targets = @(
+            @{ Name = 'ClassAegisCore.exe'; Package = './cmd/core' },
+            @{ Name = 'ClassAegisAbility.exe'; Package = './cmd/ability' },
+            @{ Name = 'ClassAegisCtl.exe'; Package = './cmd/ocmctl' },
+            @{ Name = 'ClassAegisDebug.exe'; Package = './cmd/agent' }
+          )
+          foreach ($t in $targets) {
+            go build -trimpath -ldflags "-s -w" -o "out\bin\$($t.Name)" $t.Package
             if ($LASTEXITCODE -ne 0) { exit 1 }
           }
           # GUI subsystem: double-click / boot autostart must not pop a console window.
-          go build -trimpath -ldflags "-s -w -H windowsgui" -o out\bin\launcher.exe ./cmd/launcher
+          go build -trimpath -ldflags "-s -w -H windowsgui" -o out\bin\ClassAegisLauncher.exe ./cmd/launcher
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
           Copy-Item conf/config.example.toml out/conf/
-          Compress-Archive -Path out\bin, out\conf -DestinationPath "out\OneClassMesh-Agent-win64-$v.zip" -Force
+          Compress-Archive -Path out\bin, out\conf -DestinationPath "out\ClassAegisService-win64-$v.zip" -Force
           Write-Host "version=$v"
 
       - uses: actions/upload-artifact@v4
@@ -66,10 +72,15 @@ jobs:
           cache: npm
           cache-dependency-path: cmd/ui/package-lock.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/setup-go@v5
         with:
-          name: go-bin
-          path: stage-dl
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
 
       - name: Pin version
         shell: pwsh
@@ -79,37 +90,19 @@ jobs:
           npm version $v --no-git-tag-version --allow-same-version
           Write-Host "version=$v"
 
-      - name: Build Electron app (portable dir)
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version '^2' --locked
+
+      - name: Build ClassAegisService Tauri installer
         working-directory: cmd/ui
         run: |
           npm ci --no-audit --no-fund
-          npm run build
-          npx electron-builder --dir --publish never
-
-      - name: Assemble stage (clean root layout)
-        shell: pwsh
-        run: |
-          Set-Location cmd/ui
-          New-Item -ItemType Directory -Force installer-stage\bin, installer-stage\conf | Out-Null
-          Copy-Item release\win-unpacked installer-stage\壹课管家 -Recurse
-          Copy-Item ..\..\stage-dl\bin\*.exe installer-stage\bin\
-          Copy-Item ..\..\stage-dl\conf\config.example.toml installer-stage\conf\
-
-      - name: Build NSIS installer
-        shell: pwsh
-        run: |
-          choco install nsis -y --no-progress
-          $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v','' } else { (Get-Content cmd/ui/package.json | ConvertFrom-Json).version }
-          $mk = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
-          if (-not (Test-Path $mk)) { $mk = "makensis" }
-          Set-Location cmd/ui
-          & $mk "-DVER=$v" installer.nsi
-          Get-ChildItem release\*.exe
+          npm run tauri:build
 
       - uses: actions/upload-artifact@v4
         with:
           name: installer
-          path: cmd/ui/release/*.exe
+          path: cmd/ui/src-tauri/target/release/bundle/nsis/*.exe
 
   release:
     name: GitHub Release
@@ -137,15 +130,15 @@ jobs:
           case "$GITHUB_REF_NAME" in *-*) PRERELEASE="--prerelease";; esac
           VER="${GITHUB_REF_NAME#v}"
           cat > notes.md <<'EOF'
-          壹课管家 OneClassMesh Agent
+          课佑管家 ClassAegisService
 
-          - OneClassMesh-Agent-*-setup.exe : NSIS 安装包(显示应用 + core/worker/launcher 运行时)
-          - OneClassMesh-Agent-win64-*.zip : 绿色版(5 个 exe + config.example.toml)
+          - 课佑管家_*_x64-setup.exe : Tauri NSIS 安装包(显示应用 + Core/Ability/Launcher 运行时)
+          - ClassAegisService-win64-*.zip : 绿色版(5 个 exe + config.example.toml)
 
           安装说明:
-          1. 双击 setup.exe 安装(默认 Program Files\壹课管家)
-          2. 编辑 resources\ocm\conf\config.toml(首次由 example 复制,REPLACE_ME 需替换为真实配置)
-          3. 桌面快捷方式「壹课管家」启动:launcher 守护 core/worker 并打开显示应用
+          1. 双击 setup.exe 并按默认 NSIS 安装向导安装
+          2. 在安装目录的 conf\config.toml 中填写配置(可从 config.example.toml 复制,REPLACE_ME 需替换为真实配置)
+          3. 桌面快捷方式「课佑管家」启动:ClassAegisLauncher 守护 ClassAegisCore/ClassAegisAbility 并打开 ClassAegisService
           EOF
           gh release create "$GITHUB_REF_NAME" go-bin/*.zip installer/*.exe \
-            --title "壹课管家 $VER" --notes-file notes.md $PRERELEASE
+            --title "课佑管家 $VER" --notes-file notes.md $PRERELEASE

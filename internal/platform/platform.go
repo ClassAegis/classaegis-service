@@ -20,6 +20,11 @@ type Platform interface {
 
 	// SetVolume sets master output volume, percent 0-100.
 	SetVolume(percent int) error
+	SetAudioVolume(flow string, percent int) error
+	SetAudioMute(flow string, mute bool) error
+	SetDisplayResolution(device string, width, height, refresh int) error
+	LaunchApplication(app string) error
+	RecordVoiceMessage(durationSeconds int) (string, int64, error)
 
 	// Reboot restarts the machine.
 	Reboot() error

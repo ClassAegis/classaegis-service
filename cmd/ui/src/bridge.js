@@ -1,8 +1,5 @@
-// Keep the renderer API identical across Electron and Tauri.
-// Electron injects window.ocm through preload; Tauri exposes its allowlisted
-// commands through __TAURI__.core when withGlobalTauri is enabled.
 export function installDesktopBridge() {
-  if (window.ocm || !window.__TAURI__?.core?.invoke) return
+  if (!window.__TAURI__?.core?.invoke) return
 
   const invoke = window.__TAURI__.core.invoke
   window.ocm = {

@@ -48,10 +48,10 @@ func (a *Agent) Run() error {
 		SetUsername(a.cfg.Device.SN).
 		SetPassword(a.cfg.Device.MqttToken).
 		SetCleanSession(false).
-		SetKeepAlive(30 * time.Second).
+		SetKeepAlive(30*time.Second).
 		SetAutoReconnect(true).
 		SetOrderMatters(false).
-		SetWriteTimeout(5 * time.Second).
+		SetWriteTimeout(5*time.Second).
 		SetWill(lwt, lwtPayload, 1, false)
 
 	opts.SetOnConnectHandler(func(c paho.Client) {
@@ -85,6 +85,18 @@ func (a *Agent) publishReceipt(jsonStr string) {
 	if tok.Wait() && tok.Error() != nil {
 		log.Printf("[agent] receipt publish failed: %v", tok.Error())
 	}
+}
+
+// PublishProgress publishes a non-terminal PROGRESS receipt for a running
+// command (used by the all-in-one debug mode; the multi-process mode goes
+// through core POST /event instead).
+func (a *Agent) PublishProgress(msgId string, result map[string]any) {
+	jsonStr, err := BuildReceipt(msgId, "PROGRESS", result, "", "")
+	if err != nil {
+		log.Printf("[agent] progress marshal failed: %v", err)
+		return
+	}
+	a.publishReceipt(jsonStr)
 }
 
 func (a *Agent) startHeartbeat(topic string) {

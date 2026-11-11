@@ -1,4 +1,4 @@
-# OneClassMesh agent config example.
+# ClassAegis agent config example.
 # Copy to conf/config.toml and fill in real values (config.toml is git-ignored).
 
 [device]
@@ -16,3 +16,54 @@ heartbeat_seconds = 60
 log_level = "info"
 # ipc_token is optional; defaults to "ocm-" + mqtt_token
 ipc_token = ""
+media_upload_url = ""
+media_upload_token = ""
+# mpv executable path; empty searches ability.exe directory, then bin\\mpv.exe.
+mpv_path = ""
+
+# [av] 本地杀毒引擎能力(ability 进程内)。全部可省略,省略即默认值。
+# [av]
+# enabled = true                # false 时 ability 进程不加载杀毒能力
+# db_path = ""                  # 签名库路径;默认 %ProgramData%\oneclassmesh\av\signatures.json
+# quarantine_dir = ""           # 隔离区目录;默认 %ProgramData%\oneclassmesh\av\quarantine
+# threads = 0                   # 扫描线程数;0=自动(最多 8)
+# max_file_size_mb = 0          # 超过此大小跳过;0=默认 512MB
+# enable_heuristics = true      # 双扩展名可执行文件启发式(如 invoice.pdf.exe)
+# default_on_detect = "quarantine"  # 检出后动作: quarantine | report
+# exclusions = []               # 排除路径前缀,如 "D:\data\trusted"
+# scan_interval_hours = 0       # 定时扫描间隔;0=关闭
+# scan_mode = "quick"           # 定时扫描模式: quick | full
+
+# [popup] 弹窗/广告拦截能力(ability 进程内)。全部可省略,省略即默认值。
+# [popup]
+# enabled = true            # watcher 是否随进程启动(运行时可用 POPUP_SET_ENABLED 切换)
+# rules_path = ""           # 规则集路径;默认 %ProgramData%\oneclassmesh\popup\rules.json
+# interval_ms = 0           # 窗口枚举周期;0=默认 1000ms,最小 200ms
+# action = ""               # 默认处置动作: close | hide
+# max_events = 0            # 事件缓冲上限;0=默认 500
+
+# [clean] 垃圾清理/目录扫描能力(ability 进程内)。全部可省略,省略即默认值。
+# [clean]
+# enabled = true             # false 时 ability 进程不加载垃圾清理能力
+# min_age_hours = 0          # 临时文件最小年龄;0/省略=24h,-1=不设门槛
+# exclusions = []            # 排除路径前缀,如 "D:\keep"
+# enable_categories = []     # 额外启用类别,如 ["windows_old"]
+# disable_categories = []    # 从默认集剔除,如 ["thumbcache"]
+# scan_interval_hours = 0    # 定时只读扫描间隔;0=关闭
+# run_interval_hours = 0     # 定时删除间隔;0=关闭
+# scheduled_categories = []  # 定时删除的显式类别白名单
+
+# [proc] 进程加速/逐进程流量统计能力(ability 进程内)。全部可省略。
+# [proc]
+# enabled = true           # false 时不加载进程能力
+# poll_interval_ms = 0     # 流量采样周期;0=默认 5000ms,范围 [1000, 60000]
+
+# [audit] 上网行为审计能力(ability 进程内)。全部可省略。
+# [audit]
+# enabled = true      # false 时不加载上网审计能力
+# max_records = 200   # 单数据源返回上限;0=默认 200,最大 1000
+
+# [wol] 局域网唤醒/发现能力(ability 进程内,网络操作由 core 代理)。全部可省略。
+# [wol]
+# enabled = true     # false 时不加载局域网唤醒能力
+# default_port = 9   # 魔术包 UDP 端口;0=默认 9(常见还有 7)

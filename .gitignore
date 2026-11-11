@@ -3,11 +3,21 @@ agent.exe
 ocmctl.exe
 *.exe
 dist/
+node_modules/
 **/dist-tauri/
+**/dist-tauri-build*/
 **/src-tauri/target/
+cmd/ui/release*/
+internal/ability/audit/edb.chk
+internal/ability/audit/edb.log
+internal/ability/audit/edbres*.jrs
+internal/ability/audit/edbtmp.log
+internal/ability/audit/testdata/
+internal/ability/av/.tmp
 classaegis-agent
 .gocache
 .gomodcache
+.gocache-codex
 
 # conf with real credentials
 conf/config.toml
@@ -28,5 +38,10 @@ out/
 release/
 **/build/stage/
 
-# installer staging (Electron+Go runtime assembled for NSIS)
+# Tauri installer staging
 **/installer-stage/
+
+# Local SQLite databases and test samples
+*.db
+*.sqlite
+*.sqlite3

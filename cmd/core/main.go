@@ -1,6 +1,6 @@
-// core is the core process of OneClassMesh agent (壹课管家).
+// core is the core process of ClassAegis agent (课佑管家).
 // It is the ONLY component with external network access:
-// MQTT to the intranet server, loopback IPC to worker and ui.
+// MQTT to the intranet server, loopback IPC to the ability process and ui.
 package main
 
 import (

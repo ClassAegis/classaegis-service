@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "updated": "2026-11-08T00:00:00Z",
+  "source": "oneclassmesh-seed",
+  "hashes": [
+    {
+      "sha256": "1cf841db766ea918b1b6e466a3308d79e702ef18f5f17c01a53eaf6d9c4250bc",
+      "name": "EICAR-Test-File",
+      "severity": "high",
+      "category": "test"
+    }
+  ],
+  "patterns": [
+    {
+      "pattern": "4f434d2d5349474e41545552452d544553542d5041545445524e",
+      "name": "OCM-Signature-Test-Pattern",
+      "severity": "medium",
+      "category": "test"
+    }
+  ]
+}
