@@ -1,8 +1,10 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { HomeFilled, InfoFilled, Setting, Monitor, Brush, RefreshLeft, Tools, MuteNotification } from '@element-plus/icons-vue'
+import { HomeFilled, InfoFilled, Setting, Monitor, Brush, RefreshLeft, Tools } from '@element-plus/icons-vue'
 import StatusView from './views/StatusView.vue'
 import ShieldIcon from './components/ShieldIcon.vue'
+import PopupIcon from './components/PopupIcon.vue'
+import SoftwareIcon from './components/SoftwareIcon.vue'
 import AboutView from './views/AboutView.vue'
 import FeatureView from './views/FeatureView.vue'
 import SettingsView from './views/SettingsView.vue'
@@ -16,7 +18,8 @@ const navItems = [
   { id: 'antivirus', label: '杀毒', icon: ShieldIcon },
   { id: 'cleanup', label: '清理', icon: Brush },
   { id: 'freeze', label: '还原', icon: RefreshLeft },
-  { id: 'popup', label: '弹窗拦截', icon: MuteNotification },
+  { id: 'popup', label: '弹窗拦截', icon: PopupIcon },
+  { id: 'software', label: '软件管理', icon: SoftwareIcon },
   { id: 'tools', label: '工具箱', icon: Tools },
 ]
 const pageMeta = computed(() => [...navItems, { id: 'about', label: '关于课佑' }, { id: 'settings', label: '设置' }].find((item) => item.id === page.value) || navItems[0])
@@ -116,11 +119,12 @@ button { font: inherit; }
 .app-shell { display: flex; height: 100%; min-width: 0; background: var(--canvas); }
 
 .rail { display: flex; width: 76px; flex: 0 0 76px; flex-direction: column; align-items: center; padding: 17px 8px 12px; border-right: 1px solid var(--shell-line); background: var(--rail-bg); }
-.rail-brand { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 17px; border-radius: 12px; background: var(--accent); color: #2a2118; box-shadow: 0 5px 16px rgba(227, 162, 75, .18); }
+.rail-brand { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 12px; border-radius: 12px; background: var(--accent); color: #2a2118; box-shadow: 0 5px 16px rgba(227, 162, 75, .18); }
 .rail-brand svg { width: 32px; height: 32px; }
-.rail-nav, .rail-bottom { display: grid; width: 100%; gap: 4px; }
-.rail-bottom { margin-top: auto; padding-top: 10px; }
-.rail-item { position: relative; display: grid; place-items: center; gap: 5px; width: 100%; min-height: 50px; padding: 7px 0; border: 0; border-radius: 10px; background: transparent; color: var(--rail-text); cursor: pointer; font-size: 10px; transition: background .15s ease, color .15s ease; }
+.rail-nav, .rail-bottom { display: grid; width: 100%; gap: 2px; }
+.rail-nav { min-height: 0; overflow-y: auto; flex-shrink: 1; }
+.rail-bottom { flex-shrink: 0; margin-top: auto; padding-top: 10px; }
+.rail-item { position: relative; display: grid; place-items: center; gap: 5px; width: 100%; min-height: 46px; padding: 7px 0; border: 0; border-radius: 10px; background: transparent; color: var(--rail-text); cursor: pointer; font-size: 10px; transition: background .15s ease, color .15s ease; }
 .rail-item:hover { background: var(--rail-hover); color: var(--rail-hover-text); }
 .rail-item.active { background: var(--rail-active); color: var(--accent); }
 .rail-item.active::before { position: absolute; left: 0; width: 3px; height: 30px; border-radius: 0 3px 3px 0; background: var(--accent); content: ''; }

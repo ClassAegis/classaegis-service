@@ -3,6 +3,8 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { CircleCheckFilled, CircleCloseFilled, Connection, Document, FolderOpened, Monitor, Refresh, WarningFilled } from '@element-plus/icons-vue'
 
+import ShieldIcon from '../components/ShieldIcon.vue'
+
 const emit = defineEmits(['navigate'])
 const status = ref(null)
 const error = ref('')
@@ -104,7 +106,7 @@ async function selfCheck() {
 
     <section class="quick-grid" aria-label="快捷入口">
       <button type="button" class="quick-tile" @click="selfCheck"><span class="tile-icon"><el-icon><Refresh /></el-icon></span><span><strong>立即检查</strong><small>刷新本机防护状态</small></span></button>
-      <button type="button" class="quick-tile" @click="emit('navigate', 'antivirus')"><span class="tile-icon"><el-icon><Document /></el-icon></span><span><strong>病毒查杀</strong><small>检查文件与潜在威胁</small></span></button>
+      <button type="button" class="quick-tile" @click="emit('navigate', 'antivirus')"><span class="tile-icon"><el-icon><ShieldIcon /></el-icon></span><span><strong>病毒查杀</strong><small>检查文件与潜在威胁</small></span></button>
       <button type="button" class="quick-tile" @click="emit('navigate', 'tools')"><span class="tile-icon"><el-icon><FolderOpened /></el-icon></span><span><strong>工具箱</strong><small>打开常用维护工具</small></span></button>
       <div class="quick-summary"><span>上次检查</span><strong>{{ checkedLabel }}</strong><small>{{ status?.sn || '设备信息待读取' }}</small></div>
     </section>

@@ -50,3 +50,6 @@
 :root[data-theme='light'] .quick-summary small, :root[data-theme='light'] .workspace-footer { color: var(--muted); }
 :root[data-theme='light'] .tool-icon { color: var(--accent); }
 :root[data-theme='light'] .tool-category { color: var(--muted); }
+
+:root { --icon-outline: #b0bcc7; --icon-paper: #293139; --icon-tint: #397387; --icon-blue: #449cff; }
+:root[data-theme='light'] { --icon-outline: #59636b; --icon-paper: #ffffff; --icon-tint: #a5e7f4; --icon-blue: #1682ff; }

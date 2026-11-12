@@ -1,14 +1,21 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { MuteNotification, Brush, Tools, Search, FolderOpened, Monitor, Connection, Cpu, RefreshLeft, Lock, Box, ArrowRight, Clock, DocumentChecked } from '@element-plus/icons-vue'
+import { Brush, Tools, Search, FolderOpened, Monitor, Connection, Cpu, RefreshLeft, Lock, Box, ArrowRight, Clock, DocumentChecked } from '@element-plus/icons-vue'
 
 import ShieldIcon from '../components/ShieldIcon.vue'
+import PopupIcon from '../components/PopupIcon.vue'
+import SoftwareIcon from '../components/SoftwareIcon.vue'
 
 const props = defineProps({ page: { type: String, required: true } })
 const selected = ref(null)
 const sections = {
-  popup: { eyebrow: '专注课堂', title: '少一些打扰，多一份专注', description: '管理不必要的弹窗与干扰，让课堂画面保持干净。', label: '弹窗拦截', action: '设置拦截', icon: MuteNotification, tone: 'amber', note: '按需设置规则，并为需要的应用保留白名单', cards: [
-    { title: '拦截规则', description: '管理需要拦截的弹窗与应用', icon: MuteNotification },
+  software: { eyebrow: '应用管理', title: '教学所需，井然有序', description: '集中查看已安装应用，让软件维护与课堂准备更轻松。', label: '软件管理', action: '查看已装软件', icon: SoftwareIcon, tone: 'blue', note: '按名称、类型和安装时间整理设备上的应用', cards: [
+    { title: '已装软件', description: '查看应用版本与安装信息', icon: SoftwareIcon },
+    { title: '软件卸载', description: '选择不再需要的应用进行管理', icon: Box },
+    { title: '安装记录', description: '查看软件安装与变更记录', icon: Clock },
+  ], items: ['应用列表', '安装信息', '维护记录'] },
+  popup: { eyebrow: '专注课堂', title: '少一些打扰，多一份专注', description: '管理不必要的弹窗与干扰，让课堂画面保持干净。', label: '弹窗拦截', action: '设置拦截', icon: PopupIcon, tone: 'amber', note: '按需设置规则，并为需要的应用保留白名单', cards: [
+    { title: '拦截规则', description: '管理需要拦截的弹窗与应用', icon: PopupIcon },
     { title: '应用白名单', description: '允许教学应用正常显示通知', icon: DocumentChecked },
     { title: '拦截记录', description: '查看最近的弹窗拦截情况', icon: Clock },
   ], items: ['规则管理', '应用白名单', '拦截记录'] },
@@ -89,7 +96,7 @@ const tools = [
 .orbit { position: absolute; border: 1px solid rgba(var(--feature-rgb), .13); border-radius: 50%; }
 .orbit-one { inset: 0; }.orbit-two { inset: 20px; }
 .art-core { display: grid; place-items: center; width: 110px; height: 110px; border: 1px solid rgba(var(--feature-rgb), .35); border-radius: 30px; background: rgba(var(--feature-rgb), .07); transform: rotate(-8deg); }
-.art-core > * { transform: rotate(8deg); }.art-core svg { width: 66px; height: 66px; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.art-core > * { transform: rotate(8deg); }.art-core svg { width: 66px; height: 66px; }
 .art-dot { position: absolute; top: 29px; right: 24px; width: 7px; height: 7px; border-radius: 50%; background: var(--feature-color); box-shadow: 0 0 0 5px rgba(var(--feature-rgb), .08); }
 .feature-section-title { display: flex; align-items: center; justify-content: space-between; margin: 25px 0 13px; }.feature-section-title h3 { margin: 0; font-size: 13px; font-weight: 500; }.feature-section-title > span { font-size: 10px; color: var(--muted); }
 .feature-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }

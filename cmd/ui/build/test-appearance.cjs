@@ -30,11 +30,11 @@ const server = http.createServer((req,res) => {
  assert(await theme()==='light','explicit choice persists after reload');
  await page.emulateMedia({colorScheme:'dark'});
  assert(await theme()==='light','explicit choice ignores system changes');
- for (const [label,slug] of [['首页','home'],['杀毒','antivirus'],['清理','cleanup'],['还原','freeze'],['弹窗拦截','popup'],['工具箱','tools']]) {
+ for (const [label,slug] of [['首页','home'],['杀毒','antivirus'],['清理','cleanup'],['还原','freeze'],['弹窗拦截','popup'],['软件管理','software'],['工具箱','tools']]) {
    await page.getByRole('navigation').getByRole('button',{name:label,exact:true}).click();
    await page.waitForTimeout(200);
    assert(await theme()==='light','light theme on '+label);
-   if(['杀毒','工具箱','首页'].includes(label)) await page.screenshot({path:`out/design-preview/${slug}-light.png`});
+   if(['杀毒','弹窗拦截','软件管理','工具箱','首页'].includes(label)) await page.screenshot({path:`out/design-preview/${slug}-light.png`});
  }
  await page.getByRole('button',{name:'网络诊断',exact:false}).click();
  const dialog=page.getByRole('dialog');await dialog.waitFor();
@@ -48,6 +48,16 @@ const server = http.createServer((req,res) => {
  assert(await theme()==='dark','dark mode applies');
  await page.waitForTimeout(250);
  await page.screenshot({path:'out/design-preview/settings-dark.png'});
+ for (const [label,slug] of [['杀毒','antivirus'],['弹窗拦截','popup'],['软件管理','software']]) {
+   await page.getByRole('navigation').getByRole('button',{name:label,exact:true}).click();
+   await page.waitForTimeout(200);
+   await page.screenshot({path:`out/design-preview/${slug}-dark.png`});
+ }
+ await page.getByRole('button',{name:'查看已装软件',exact:true}).click();
+ await page.getByRole('dialog').waitFor();
+ assert(await page.getByRole('dialog').innerText().then(text=>text.includes('预览')),'software management opens preview explanation');
+ await page.getByRole('button',{name:'知道了'}).click();
+ await page.getByRole('button',{name:'设置',exact:true}).click();
  await page.getByRole('radio',{name:'跟随系统'}).check();
  await page.emulateMedia({colorScheme:'light'});
  await page.waitForFunction(()=>document.documentElement.dataset.theme==='light');
@@ -59,6 +69,11 @@ const server = http.createServer((req,res) => {
  await page.setViewportSize({width:820,height:560});
  await page.screenshot({path:'out/design-preview/settings-small.png'});
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'minimum window has no horizontal page overflow');
+ assert(await page.evaluate(()=>{
+   const nav=document.querySelector('.rail-nav');
+   const bottom=document.querySelector('.rail-bottom');
+   return nav.scrollHeight<=nav.clientHeight+1 && nav.getBoundingClientRect().bottom<=bottom.getBoundingClientRect().top;
+ }),'all seven navigation entries fit above bottom actions at minimum size');
  await page.getByRole('button',{name:'关于',exact:true}).click();
  await page.getByRole('heading',{name:'关于课佑',exact:true}).waitFor();
  await page.screenshot({path:'out/design-preview/about-light.png'});

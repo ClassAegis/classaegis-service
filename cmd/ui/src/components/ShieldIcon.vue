@@ -1,6 +1,8 @@
 <template>
-  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2.5 20 5.5v5.7c0 4.8-3 8.4-8 10.3-5-1.9-8-5.5-8-10.3V5.5l8-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-    <path d="m8.5 11.8 2.3 2.3 4.7-4.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+  <svg class="product-feature-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+    <path d="m16 3 11 3v8c0 7-4.4 12-11 15C9.4 26 5 21 5 14V6l11-3Z" fill="var(--icon-paper)" />
+    <path d="m16 3-11 3v8c0 7 4.4 12 11 15V3Z" fill="var(--icon-tint)" />
+    <path d="m16 3 11 3v8c0 7-4.4 12-11 15C9.4 26 5 21 5 14V6l11-3Z" stroke="var(--icon-outline)" stroke-width="1.8" stroke-linejoin="round" />
+    <path d="m18 8-8 10h5l-1 7 9-12h-6l1-5Z" fill="var(--icon-blue)" />
   </svg>
 </template>
