@@ -1,9 +1,10 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { HomeFilled, Document, InfoFilled, Setting, Monitor, Connection } from '@element-plus/icons-vue'
+import { HomeFilled, Document, InfoFilled, Setting, Monitor, CircleCheck, Brush, RefreshLeft, Tools } from '@element-plus/icons-vue'
 import StatusView from './views/StatusView.vue'
 import LogView from './views/LogView.vue'
 import AboutView from './views/AboutView.vue'
+import FeatureView from './views/FeatureView.vue'
 
 function minimizeWindow() { return window.ocm.minimizeWindow() }
 function closeWindow() { return window.ocm.closeWindow() }
@@ -11,10 +12,13 @@ function closeWindow() { return window.ocm.closeWindow() }
 const page = ref('home')
 const navItems = [
   { id: 'home', label: '首页', icon: HomeFilled },
+  { id: 'antivirus', label: '杀毒', icon: CircleCheck },
+  { id: 'cleanup', label: '清理', icon: Brush },
+  { id: 'freeze', label: '冰点', icon: RefreshLeft },
+  { id: 'tools', label: '工具', icon: Tools },
   { id: 'logs', label: '安全日志', icon: Document },
-  { id: 'about', label: '关于课佑', icon: InfoFilled },
 ]
-const pageMeta = computed(() => navItems.find((item) => item.id === page.value) || navItems[0])
+const pageMeta = computed(() => [...navItems, { id: 'about', label: '关于课佑' }].find((item) => item.id === page.value) || navItems[0])
 </script>
 
 <template>
@@ -30,12 +34,12 @@ const pageMeta = computed(() => navItems.find((item) => item.id === page.value) 
       </div>
       <nav class="rail-nav" aria-label="主导航">
         <button v-for="item in navItems" :key="item.id" type="button" class="rail-item" :class="{ active: page === item.id }" :title="item.label" @click="page = item.id">
-          <el-icon :size="21"><component :is="item.icon" /></el-icon>
+          <svg v-if="item.id === 'freeze'" class="rail-snow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2v20M3.34 7l17.32 10M3.34 17 20.66 7M8 4l4 4 4-4M8 20l4-4 4 4M3.5 11l5-1-1-5M20.5 13l-5 1 1 5M3.5 13l5 1-1 5M20.5 11l-5-1 1-5" /></svg><el-icon v-else :size="21"><component :is="item.icon" /></el-icon>
           <span>{{ item.label }}</span>
         </button>
       </nav>
       <div class="rail-bottom">
-        <button type="button" class="rail-item" title="本机服务"><el-icon :size="20"><Connection /></el-icon><span>本机</span></button>
+        <button type="button" class="rail-item" :class="{ active: page === 'about' }" title="关于课佑" @click="page = 'about'"><el-icon :size="20"><InfoFilled /></el-icon><span>关于</span></button>
         <button type="button" class="rail-item" title="设置"><el-icon :size="21"><Setting /></el-icon><span>设置</span></button>
       </div>
     </aside>
@@ -60,7 +64,7 @@ const pageMeta = computed(() => navItems.find((item) => item.id === page.value) 
       <main class="workspace-body">
         <StatusView v-if="page === 'home'" @open-logs-view="page = 'logs'" />
         <LogView v-else-if="page === 'logs'" />
-        <AboutView v-else />
+        <AboutView v-else-if="page === 'about'" /><FeatureView v-else :key="page" :page="page" />
       </main>
 
       <footer class="workspace-footer">
@@ -111,12 +115,13 @@ button { font: inherit; }
 #app { height: 100vh; }
 .app-shell { display: flex; height: 100%; min-width: 0; background: var(--canvas); }
 
-.rail { display: flex; width: 76px; flex: 0 0 76px; flex-direction: column; align-items: center; padding: 20px 8px 14px; border-right: 1px solid #343536; background: #1a1b1c; }
-.rail-brand { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 25px; border-radius: 12px; background: var(--accent); color: #2a2118; box-shadow: 0 5px 16px rgba(227, 162, 75, .18); }
+.rail { display: flex; width: 76px; flex: 0 0 76px; flex-direction: column; align-items: center; padding: 17px 8px 12px; border-right: 1px solid #343536; background: #1a1b1c; }
+.rail-brand { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 17px; border-radius: 12px; background: var(--accent); color: #2a2118; box-shadow: 0 5px 16px rgba(227, 162, 75, .18); }
 .rail-brand svg { width: 32px; height: 32px; }
-.rail-nav, .rail-bottom { display: grid; width: 100%; gap: 8px; }
-.rail-bottom { margin-top: auto; }
-.rail-item { position: relative; display: grid; place-items: center; gap: 5px; width: 100%; min-height: 58px; padding: 7px 0; border: 0; border-radius: 10px; background: transparent; color: #868783; cursor: pointer; font-size: 9px; transition: background .15s ease, color .15s ease; }
+.rail-nav, .rail-bottom { display: grid; width: 100%; gap: 4px; }
+.rail-bottom { margin-top: auto; padding-top: 10px; }
+.rail-snow { width: 21px; height: 21px; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.rail-item { position: relative; display: grid; place-items: center; gap: 5px; width: 100%; min-height: 50px; padding: 7px 0; border: 0; border-radius: 10px; background: transparent; color: #868783; cursor: pointer; font-size: 10px; transition: background .15s ease, color .15s ease; }
 .rail-item:hover { background: #2a2b2c; color: #dddeda; }
 .rail-item.active { background: #343536; color: var(--accent); }
 .rail-item.active::before { position: absolute; left: 0; width: 3px; height: 30px; border-radius: 0 3px 3px 0; background: var(--accent); content: ''; }
