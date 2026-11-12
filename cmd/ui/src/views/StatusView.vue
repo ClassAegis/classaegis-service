@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { CircleCheck, CircleClose, Connection, Monitor, Refresh, Warning, ArrowRight, Brush } from '@element-plus/icons-vue'
+import { preferences } from '../preferences'
 import ShieldIcon from '../components/ShieldIcon.vue'
 import SoftwareIcon from '../components/SoftwareIcon.vue'
 import ToolboxIcon from '../components/ToolboxIcon.vue'
@@ -23,7 +24,16 @@ async function refreshStatus() {
   } catch (e) { status.value = null; error.value = String(e?.message || e || '无法连接核心服务') }
   finally { loaded.value = true; lastChecked.value = Date.now(); checking.value = false }
 }
-onMounted(() => { refreshStatus(); timer = setInterval(refreshStatus, 10000) })
+function scheduleRefresh() {
+  clearInterval(timer)
+  if (preferences.value.refreshInterval > 0) timer = setInterval(refreshStatus, preferences.value.refreshInterval * 1000)
+}
+onMounted(() => { refreshStatus(); scheduleRefresh() })
+watch(() => preferences.value.refreshInterval, scheduleRefresh)
+const deviceLabel = computed(() => {
+  const sn = status.value?.sn
+  return sn ? preferences.value.maskDeviceId ? '••••••••' : String(sn) : '暂未读取'
+})
 onUnmounted(() => clearInterval(timer))
 const phase = computed(() => !loaded.value ? 'loading' : error.value || !status.value ? 'offline' : status.value.connected && status.value.abilityAlive ? 'ok' : 'partial')
 const state = computed(() => ({
@@ -48,7 +58,9 @@ const quickActions = [
   { id:'tools',label:'工具箱',note:'更多实用工具',icon:ToolboxIcon },
 ]
 async function selfCheck() {
+  if (checking.value) return
   await refreshStatus()
+  if (!preferences.value.showCheckupMessages) return
   if (phase.value === 'ok') ElMessage.success('体检完成，三项运行检查均正常')
   else if (phase.value === 'partial') ElMessage.warning('体检完成，部分服务需要关注')
   else ElMessage.error('无法完成体检，请检查核心服务')
@@ -57,13 +69,13 @@ async function selfCheck() {
 
 <template>
   <div class="overview-home">
-    <header class="overview-heading"><div><span>设备与服务，一目了然</span><h1>设备概览</h1></div><span class="overview-live"><i></i>每 10 秒更新</span></header>
+    <header class="overview-heading"><div><span>设备与服务，一目了然</span><h1>设备概览</h1></div><span class="overview-live"><i></i>{{ preferences.refreshInterval ? `每 ${preferences.refreshInterval} 秒更新` : '手动刷新' }}</span></header>
     <section class="checkup-hero" :class="phase" aria-label="设备体检">
       <div class="checkup-emblem" aria-hidden="true"><span class="emblem-ring"></span><ShieldIcon /><span class="emblem-state"><el-icon><component :is="state.icon" /></el-icon></span></div>
       <div class="checkup-copy"><span class="checkup-badge">{{ state.badge }}</span><h2>{{ state.label }}</h2><p>{{ state.note }}</p><div class="checkup-action"><button type="button" class="checkup-button" :disabled="checking" @click="selfCheck"><el-icon :class="{ spinning:checking }"><Refresh /></el-icon>{{ checking ? '正在体检…' : '全面体检' }}</button><span>检查服务运行与设备连接</span></div></div>
     </section>
     <section class="device-facts" aria-label="设备信息">
-      <div><span>设备编号</span><strong :title="status?.sn">{{ status?.sn || '暂未读取' }}</strong></div>
+      <div><span>设备编号</span><strong :title="deviceLabel">{{ deviceLabel }}</strong></div>
       <div><span>服务版本</span><strong>{{ status?.agentVersion || '暂未读取' }}</strong></div>
       <div><span>最近检查</span><strong>{{ checkedLabel }}</strong></div>
     </section>

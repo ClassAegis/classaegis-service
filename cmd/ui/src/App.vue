@@ -119,19 +119,19 @@ button { font: inherit; }
 #app { height: 100vh; }
 .app-shell { display: flex; height: 100%; min-width: 0; background: var(--canvas); }
 
-.rail { display: flex; width: 76px; flex: 0 0 76px; flex-direction: column; align-items: center; padding: 17px 8px 12px; border-right: 1px solid var(--shell-line); background: var(--rail-bg); }
+.rail { display: flex; width: 68px; flex: 0 0 68px; flex-direction: column; align-items: center; padding: 17px 6px 12px; border-right: 1px solid var(--shell-line); background: var(--rail-bg); }
 .rail-brand { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 12px; border-radius: 12px; background: var(--accent); color: #2a2118; box-shadow: 0 5px 16px rgba(227, 162, 75, .18); }
 .rail-brand svg { width: 32px; height: 32px; }
 .rail-nav, .rail-bottom { display: grid; width: 100%; gap: 2px; }
 .rail-nav { flex: 1; min-height: 0; overflow-y: auto; grid-template-rows: repeat(7, minmax(48px, 1fr)); align-content: stretch; }
 .rail-bottom { grid-auto-rows: 48px; flex-shrink: 0; margin-top: auto; padding-top: 10px; }
-.rail-item { position: relative; display: grid; grid-template-rows: 22px 12px; justify-items: center; align-content: center; gap: 4px; width: 100%; height: 100%; min-height: 48px; padding: 5px 0; border: 0; border-radius: 10px; background: transparent; color: var(--rail-text); cursor: pointer; font-size: 10px; transition: background .15s ease, color .15s ease; }
-.rail-item > .el-icon { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; font-size: 22px !important; }
-.rail-item > .el-icon svg { display: block; width: 22px; height: 22px; }
+.rail-item { position: relative; display: grid; grid-template-rows: 22px 12px; justify-items: center; align-content: center; gap: 4px; width: 100%; height: 100%; min-height: 48px; max-height: 54px; align-self: center; padding: 5px 0; border: 0; border-radius: 10px; background: transparent; color: var(--rail-text); cursor: pointer; font-size: 10px; transition: background .15s ease, color .15s ease; }
+.rail-item > .el-icon { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; font-size: 20px !important; }
+.rail-item > .el-icon svg { display: block; width: 20px; height: 20px; }
 .rail-item > span { line-height: 12px; }
 .rail-item:hover { background: var(--rail-hover); color: var(--rail-hover-text); }
 .rail-item.active { background: var(--rail-active); color: var(--accent); }
-.rail-item.active::before { position: absolute; left: 0; width: 3px; height: 30px; border-radius: 0 3px 3px 0; background: var(--accent); content: ''; }
+.rail-item.active::before { position: absolute; top: 50%; transform: translateY(-50%); left: 0; width: 3px; height: 30px; border-radius: 0 3px 3px 0; background: var(--accent); content: ''; }
 
 .workspace { display: flex; min-width: 0; flex: 1; flex-direction: column; background: var(--canvas); }
 .topbar { display: flex; align-items: center; justify-content: space-between; height: 40px; flex: 0 0 40px; padding: 0 0 0 26px; border-bottom: 1px solid var(--shell-line); background: var(--header-bg); -webkit-app-region: drag; }
