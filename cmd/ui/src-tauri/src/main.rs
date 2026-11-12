@@ -129,6 +129,14 @@ fn main() {
             let main_window = app.get_webview_window("main").ok_or("main window is missing")?;
             let main_window_for_close = main_window.clone();
             main_window.on_window_event(move |event| {
+                if matches!(event, tauri::WindowEvent::Resized(_)) {
+                    if main_window_for_close.is_fullscreen().unwrap_or(false) {
+                        let _ = main_window_for_close.set_fullscreen(false);
+                    }
+                    if main_window_for_close.is_maximized().unwrap_or(false) {
+                        let _ = main_window_for_close.unmaximize();
+                    }
+                }
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     api.prevent_close();
                     let _ = main_window_for_close.hide();

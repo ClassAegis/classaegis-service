@@ -1,6 +1,10 @@
 export function installDesktopBridge() {
   if (!window.__TAURI__?.core?.invoke) return
 
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'F11') event.preventDefault()
+  }, true)
+
   const invoke = window.__TAURI__.core.invoke
   window.ocm = {
     getStatus: () => invoke('get_status'),

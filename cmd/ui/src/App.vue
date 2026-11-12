@@ -46,7 +46,14 @@ const pageMeta = computed(() => navItems.find((item) => item.id === page.value) 
         <div class="topbar-actions">
           <span class="protected-chip"><i></i> 本机状态监测</span>
           <span class="topbar-device"><el-icon :size="14"><Monitor /></el-icon>Windows 终端</span>
-          <button type="button" class="window-action" title="最小化" @click="minimizeWindow">—</button><button type="button" class="window-action close" title="关闭" @click="closeWindow">×</button>
+          <div class="window-controls" aria-label="窗口控制">
+            <button type="button" class="window-action" title="最小化" aria-label="最小化" @click="minimizeWindow">
+              <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1 6h10" /></svg>
+            </button>
+            <button type="button" class="window-action close" title="关闭" aria-label="关闭" @click="closeWindow">
+              <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m1.5 1.5 9 9m0-9-9 9" /></svg>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -90,6 +97,15 @@ const pageMeta = computed(() => navItems.find((item) => item.id === page.value) 
 }
 
 * { box-sizing: border-box; }
+*::-webkit-scrollbar { width: 4px; height: 4px; background: transparent; }
+*::-webkit-scrollbar-track { background: transparent; margin-block: 10px; }
+*::-webkit-scrollbar-thumb { border-radius: 4px; background: #555756; }
+*::-webkit-scrollbar-thumb:hover { background: #777a77; }
+*::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+*::-webkit-scrollbar-corner { background: transparent; }
+.el-scrollbar__bar.is-vertical { width: 4px; }
+.el-scrollbar__bar.is-horizontal { height: 4px; }
+.el-scrollbar__thumb { background-color: #777a77; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--canvas); color: var(--ink); font-family: 'Microsoft YaHei UI', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 button { font: inherit; }
 #app { height: 100vh; }
@@ -106,18 +122,22 @@ button { font: inherit; }
 .rail-item.active::before { position: absolute; left: 0; width: 3px; height: 30px; border-radius: 0 3px 3px 0; background: var(--accent); content: ''; }
 
 .workspace { display: flex; min-width: 0; flex: 1; flex-direction: column; background: var(--canvas); }
-.topbar { display: flex; align-items: center; justify-content: space-between; height: 56px; flex: 0 0 56px; padding: 0 26px; border-bottom: 1px solid #343536; background: #222324; -webkit-app-region: drag; }
+.topbar { display: flex; align-items: center; justify-content: space-between; height: 56px; flex: 0 0 56px; padding: 0 0 0 26px; border-bottom: 1px solid #343536; background: #222324; -webkit-app-region: drag; }
 .topbar-title, .topbar-actions, .protected-chip, .topbar-device { display: flex; align-items: center; }
 .topbar-title { gap: 9px; color: var(--muted); font-size: 12px; }
 .topbar-title strong { color: var(--ink); font-size: 13px; }
 .topbar-title span:nth-child(2) { color: #5f605e; }
-.topbar-actions { gap: 12px; color: var(--muted); }
+.topbar-actions { align-self: stretch; gap: 12px; color: var(--muted); }
 .protected-chip { gap: 6px; color: var(--ok); font-size: 10px; }
 .protected-chip i { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px rgba(108, 196, 154, .1); }
 .topbar-device { gap: 5px; font-size: 10px; }
-.window-action { width: 32px; height: 30px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: #8e8f8d; cursor: pointer; font-family: 'Segoe UI', sans-serif; font-size: 17px; line-height: 1; -webkit-app-region: no-drag; }
+.window-controls { position: relative; display: flex; align-self: stretch; margin-left: 4px; padding-left: 8px; }
+.window-controls::before { position: absolute; left: 0; top: 50%; width: 1px; height: 18px; background: var(--line); transform: translateY(-50%); content: ''; }
+.window-action { display: grid; place-items: center; width: 46px; height: 100%; padding: 0; border: 0; background: transparent; color: #b0b1af; cursor: pointer; -webkit-app-region: no-drag; }
+.window-action svg { display: block; width: 12px; height: 12px; stroke: currentColor; stroke-width: 1; }
+.window-action:focus-visible { outline: 1px solid var(--accent); outline-offset: -4px; }
 .window-action:hover { background: #3a3b3c; color: var(--ink); }
-.window-action.close { font-size: 22px; }.window-action.close:hover { background: #b83d3d; color: #fff; }
+.window-action.close:hover { background: #b83d3d; color: #fff; }
 .workspace-body { min-height: 0; flex: 1; overflow: auto; padding: 28px 44px 22px; }
 .workspace-footer { display: flex; align-items: center; gap: 9px; min-height: 34px; padding: 0 42px 12px; color: #70716f; font-family: 'Segoe UI', sans-serif; font-size: 9px; }
 .footer-divider { width: 3px; height: 3px; border-radius: 50%; background: #50514f; }
@@ -128,7 +148,7 @@ button { font: inherit; }
   .rail-item span { display: none; }
   .workspace-body { padding: 24px 20px 18px; }
   .workspace-footer { padding-left: 20px; padding-right: 20px; }
-  .topbar { padding: 0 17px; }
-  .topbar-device, .window-action { display: none; }
+  .topbar { padding: 0 0 0 17px; }
+  .topbar-device { display: none; }
 }
 </style>

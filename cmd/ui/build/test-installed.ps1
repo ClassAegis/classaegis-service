@@ -46,6 +46,18 @@ foreach ($name in @('ClassAegisCore.exe', 'ClassAegisAbility.exe', 'ClassAegisLa
 if (!(Test-Path (Join-Path $InstallRoot 'conf/config.example.toml') -PathType Leaf)) { throw 'Configuration template missing' }
 Write-Output 'PASS: all five Service components and configuration template installed'
 $initialId = (Get-AppRoot).Current.ProcessId
+$root = Get-AppRoot
+$windowPattern = [System.Windows.Automation.WindowPattern]$root.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern)
+if ($windowPattern.Current.CanMaximize) { throw 'Installed window still allows maximizing' }
+Write-Output 'PASS: maximizing disabled'
+$controlRects = foreach ($name in @('最小化', '关闭')) {
+    $button = $root.FindFirst([System.Windows.Automation.TreeScope]::Descendants,
+        [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::NameProperty, $name))
+    if (!$button) { throw "Window control missing: $name" }
+    $button.Current.BoundingRectangle
+}
+if ($controlRects[0].Y -ne $controlRects[1].Y -or $controlRects[0].Height -ne $controlRects[1].Height -or $controlRects[0].Width -ne $controlRects[1].Width) { throw 'Window controls are not aligned' }
+Write-Output 'PASS: window controls share the same size and vertical position'
 Assert-Text '三层防护链路'
 Click-Button '安全日志'
 Assert-Text '运行日志'
@@ -54,7 +66,7 @@ Assert-Text ([Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $InstallRo
 Click-Button '首页'
 Assert-Text '三层防护链路'
 $mainHandle = [IntPtr](Get-AppRoot).Current.NativeWindowHandle
-Click-Button '×'
+Click-Button '关闭'
 Start-Sleep -Milliseconds 500
 if ([InstalledWindowProbe]::IsWindowVisible($mainHandle)) { throw 'Custom close button did not hide the window' }
 Write-Output 'PASS: custom close hides the window while keeping the process alive'
@@ -64,7 +76,7 @@ Assert-Text '三层防护链路'
 if ($script:app[0].Id -ne $initialId) { throw 'Original process was replaced' }
 Write-Output 'PASS: launching again restores the same instance'
 $mainHandle = [IntPtr](Get-AppRoot).Current.NativeWindowHandle
-Click-Button '—'
+Click-Button '最小化'
 if (![InstalledWindowProbe]::IsIconic($mainHandle)) { throw 'Minimize button did not minimize the window' }
 Write-Output 'PASS: custom minimize button'
 Start-Process (Join-Path $InstallRoot 'ClassAegisService.exe')
