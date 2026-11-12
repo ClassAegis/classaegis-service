@@ -58,7 +58,7 @@ const metrics = computed(() => {
 const serviceRows = computed(() => {
   const s = status.value
   return [
-    { name: 'ClassAegisLauncher', label: '守护进程', detail: '负责启动与重启', tone: loaded.value ? 'ok' : 'loading' },
+    { name: 'ClassAegisLauncher', label: '守护进程', detail: '负责启动与重启', tone: 'loading' },
     { name: 'ClassAegisCore', label: '核心进程', detail: error.value ? '环回接口不可达' : 'MQTT 与安全验签', tone: error.value ? 'danger' : loaded.value ? 'ok' : 'loading' },
     { name: 'ClassAegisAbility', label: '业务能力', detail: s?.abilityAlive ? '本地能力已注册' : '等待能力宿主', tone: s?.abilityAlive ? 'ok' : error.value ? 'danger' : 'warning' },
   ]

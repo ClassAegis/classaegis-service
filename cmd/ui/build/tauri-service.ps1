@@ -5,7 +5,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $uiRoot = Split-Path -Parent $PSScriptRoot
 $tauriRoot = Join-Path $uiRoot 'src-tauri'
-$buildOutput = Join-Path $env:TEMP ("classaegis-ui-" + [guid]::NewGuid().ToString('N'))
+$buildOutput = Join-Path $uiRoot 'dist-tauri'
 $userProfile = [Environment]::GetFolderPath('UserProfile')
 
 $cargoPath = (Get-Command cargo -ErrorAction SilentlyContinue).Source
@@ -33,10 +33,7 @@ try {
     if ($Dev) {
       & $tauriPath dev
     } else {
-      $overridePath = Join-Path $env:TEMP 'classaegis-tauri-build.json'
-      $override = @{ build = @{ frontendDist = $buildOutput } } | ConvertTo-Json -Compress
-      Set-Content -LiteralPath $overridePath -Value $override -Encoding UTF8
-      & $tauriPath build --config tauri.conf.json --config $overridePath
+      & $tauriPath build --config tauri.conf.json
     }
     if ($LASTEXITCODE -ne 0) { throw 'Tauri build failed' }
   } finally {

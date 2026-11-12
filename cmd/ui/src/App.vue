@@ -5,6 +5,9 @@ import StatusView from './views/StatusView.vue'
 import LogView from './views/LogView.vue'
 import AboutView from './views/AboutView.vue'
 
+function minimizeWindow() { return window.ocm.minimizeWindow() }
+function closeWindow() { return window.ocm.closeWindow() }
+
 const page = ref('home')
 const navItems = [
   { id: 'home', label: '首页', icon: HomeFilled },
@@ -41,9 +44,9 @@ const pageMeta = computed(() => navItems.find((item) => item.id === page.value) 
       <header class="topbar">
         <div class="topbar-title"><strong>ClassAegisService</strong><span>/</span><span>{{ pageMeta.label }}</span></div>
         <div class="topbar-actions">
-          <span class="protected-chip"><i></i> 本机防护已开启</span>
+          <span class="protected-chip"><i></i> 本机状态监测</span>
           <span class="topbar-device"><el-icon :size="14"><Monitor /></el-icon>Windows 终端</span>
-          <button type="button" class="window-action" title="最小化" @click="window.ocm.minimizeWindow">—</button><button type="button" class="window-action close" title="关闭" @click="window.ocm.closeWindow">×</button>
+          <button type="button" class="window-action" title="最小化" @click="minimizeWindow">—</button><button type="button" class="window-action close" title="关闭" @click="closeWindow">×</button>
         </div>
       </header>
 

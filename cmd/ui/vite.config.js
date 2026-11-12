@@ -9,6 +9,6 @@ export default defineConfig({
     strictPort: true,
   },
   build: {
-    outDir: process.env.VITE_OUT_DIR || 'dist',
+    outDir: process.env.VITE_OUT_DIR || 'dist-tauri',
   },
 })
