@@ -123,9 +123,9 @@ button { font: inherit; }
 .rail-brand { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 12px; border-radius: 12px; background: var(--accent); color: #2a2118; box-shadow: 0 5px 16px rgba(227, 162, 75, .18); }
 .rail-brand svg { width: 32px; height: 32px; }
 .rail-nav, .rail-bottom { display: grid; width: 100%; gap: 2px; }
-.rail-nav { min-height: 0; overflow-y: auto; flex-shrink: 1; }
-.rail-bottom { flex-shrink: 0; margin-top: auto; padding-top: 10px; }
-.rail-item { position: relative; display: grid; grid-template-rows: 22px 12px; justify-items: center; align-content: center; gap: 4px; width: 100%; height: 48px; min-height: 48px; padding: 5px 0; border: 0; border-radius: 10px; background: transparent; color: var(--rail-text); cursor: pointer; font-size: 10px; transition: background .15s ease, color .15s ease; }
+.rail-nav { flex: 1; min-height: 0; overflow-y: auto; grid-template-rows: repeat(7, minmax(48px, 1fr)); align-content: stretch; }
+.rail-bottom { grid-auto-rows: 48px; flex-shrink: 0; margin-top: auto; padding-top: 10px; }
+.rail-item { position: relative; display: grid; grid-template-rows: 22px 12px; justify-items: center; align-content: center; gap: 4px; width: 100%; height: 100%; min-height: 48px; padding: 5px 0; border: 0; border-radius: 10px; background: transparent; color: var(--rail-text); cursor: pointer; font-size: 10px; transition: background .15s ease, color .15s ease; }
 .rail-item > .el-icon { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; font-size: 22px !important; }
 .rail-item > .el-icon svg { display: block; width: 22px; height: 22px; }
 .rail-item > span { line-height: 12px; }

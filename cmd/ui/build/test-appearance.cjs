@@ -48,7 +48,7 @@ const server = http.createServer((req,res) => {
  assert(await theme()==='dark','dark mode applies');
  await page.waitForTimeout(250);
  await page.screenshot({path:'out/design-preview/settings-dark.png'});
- for (const [label,slug] of [['杀毒','antivirus'],['弹窗拦截','popup'],['软件管理','software']]) {
+ for (const [label,slug] of [['首页','home'],['杀毒','antivirus'],['弹窗拦截','popup'],['软件管理','software']]) {
    await page.getByRole('navigation').getByRole('button',{name:label,exact:true}).click();
    await page.waitForTimeout(200);
    await page.screenshot({path:`out/design-preview/${slug}-dark.png`});
@@ -77,6 +77,32 @@ const server = http.createServer((req,res) => {
  await page.getByRole('button',{name:'关于',exact:true}).click();
  await page.getByRole('heading',{name:'关于课佑',exact:true}).waitFor();
  await page.screenshot({path:'out/design-preview/about-light.png'});
+ await page.getByRole('navigation').getByRole('button',{name:'首页',exact:true}).click();
+ await page.getByRole('heading',{name:'暂时无法读取设备状态',exact:true}).waitFor();
+ await page.screenshot({path:'out/design-preview/home-small.png'});
+ assert(await page.locator('.overview-home').evaluate(el=>el.scrollWidth<=el.clientWidth),'home fits minimum window width');
+ await page.evaluate(()=>{window.ocm.getStatus=async()=>({ok:true,data:{sn:'TEST-DEVICE-001',agentVersion:'0.1.2',connected:true,abilityAlive:true}})});
+ await page.getByRole('button',{name:'全面体检',exact:true}).click();
+ await page.getByRole('heading',{name:'设备运行状态良好',exact:true}).waitFor();
+ assert(await page.locator('.check-result.ok').count()===3,'checkup displays three healthy services from status response');
+ assert(await page.locator('.device-facts').innerText().then(t=>t.includes('TEST-DEVICE-001')&&t.includes('0.1.2')),'device information comes from status response');
+ await page.screenshot({path:'out/design-preview/home-small-healthy.png'});
+ await page.evaluate(()=>{window.ocm.getStatus=async()=>({ok:true,data:{connected:false,abilityAlive:false}})});
+ await page.getByRole('button',{name:'全面体检',exact:true}).click();
+ await page.getByRole('heading',{name:'部分服务需要关注',exact:true}).waitFor();
+ assert(await page.locator('.check-result.partial').count()===2,'checkup identifies disconnected channel and unavailable ability');
+ await page.setViewportSize({width:980,height:660});
+ await page.evaluate(()=>{window.ocm.getStatus=async()=>{throw Error('核心服务未运行')}});
+ await page.getByRole('button',{name:'全面体检',exact:true}).click();
+ await page.getByRole('heading',{name:'暂时无法读取设备状态',exact:true}).waitFor();
+ assert(await page.locator('.check-result.loading').count()===2,'offline dependencies stay pending instead of showing healthy');
+ await page.waitForTimeout(3500);
+ await page.mouse.move(970,650);
+ await page.screenshot({path:'out/design-preview/home-light.png'});
+ assert(await page.locator('.rail-nav').evaluate(el=>el.getBoundingClientRect().bottom>500),'navigation spreads into available vertical space');
+ await page.getByRole('button',{name:'病毒查杀',exact:false}).click();
+ await page.getByRole('heading',{name:'病毒查杀',exact:true}).waitFor();
+ assert(true,'home shortcut opens the corresponding feature');
  if(errors.length)throw Error(errors.join('\n'));
  }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1;});

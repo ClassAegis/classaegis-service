@@ -41,12 +41,5 @@
 :root[data-theme='light'] .rail-brand { background: #e6a345; color: #34281a; }
 :root[data-theme='light'] .feature-art { opacity: .85; }
 :root[data-theme='light'] .feature-preview-dialog { --el-dialog-bg-color: var(--surface); --el-text-color-primary: var(--ink); --el-text-color-regular: var(--slate); border-color: var(--line); }
-:root[data-theme='light'] .hero-status-badge { background: rgba(255,255,255,.92); }
-:root[data-theme='light'] .circuit-art path[fill='#242628'] { fill: #eef1f5; }
-:root[data-theme='light'] .circuit-art path[fill='#2f3132'] { fill: #fff7e9; }
-:root[data-theme='light'] .circuit-art g[fill='#343638'] { fill: #e9edf2; }
-:root[data-theme='light'] .service-strip { background: var(--surface); }
-:root[data-theme='light'] .tile-icon { border-color: #ddc6a5; }
-:root[data-theme='light'] .quick-summary small, :root[data-theme='light'] .workspace-footer { color: var(--muted); }
 :root[data-theme='light'] .tool-icon { color: var(--accent); }
 :root[data-theme='light'] .tool-category { color: var(--muted); }
