@@ -1,8 +1,5 @@
 <template>
-  <svg class="product-feature-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-    <path d="m16 3 11 3v8c0 7-4.4 12-11 15C9.4 26 5 21 5 14V6l11-3Z" fill="var(--icon-paper)" />
-    <path d="m16 3-11 3v8c0 7 4.4 12 11 15V3Z" fill="var(--icon-tint)" />
-    <path d="m16 3 11 3v8c0 7-4.4 12-11 15C9.4 26 5 21 5 14V6l11-3Z" stroke="var(--icon-outline)" stroke-width="1.8" stroke-linejoin="round" />
-    <path d="m18 8-8 10h5l-1 7 9-12h-6l1-5Z" fill="var(--icon-blue)" />
+  <svg class="product-feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="m12 3 8 2.5v5.8c0 4.6-3 7.8-8 10.2-5-2.4-8-5.6-8-10.2V5.5L12 3Z" /><path d="m13 7-5 6h4l-1 4 5-6h-4l1-4Z" />
   </svg>
 </template>

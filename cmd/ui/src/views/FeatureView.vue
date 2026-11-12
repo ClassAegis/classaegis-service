@@ -1,10 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { Brush, Tools, Search, FolderOpened, Monitor, Connection, Cpu, RefreshLeft, Lock, Box, ArrowRight, Clock, DocumentChecked } from '@element-plus/icons-vue'
+import { Brush, Search, FolderOpened, Monitor, Connection, Cpu, RefreshLeft, Lock, Box, ArrowRight, Clock, DocumentChecked } from '@element-plus/icons-vue'
 
 import ShieldIcon from '../components/ShieldIcon.vue'
 import PopupIcon from '../components/PopupIcon.vue'
 import SoftwareIcon from '../components/SoftwareIcon.vue'
+import ToolboxIcon from '../components/ToolboxIcon.vue'
 
 const props = defineProps({ page: { type: String, required: true } })
 const selected = ref(null)
@@ -31,7 +32,7 @@ const sections = {
   ], items: ['临时文件', '应用缓存', '回收站'] },
   freeze: { eyebrow: '环境还原', title: '熟悉的课堂环境，始终如初', description: '规划系统保护与还原，让公共设备在下次开机时回到熟悉的状态。', label: '系统还原', action: '设置保护', icon: RefreshLeft, tone: 'blue', note: '选择保护分区，安排维护与还原策略', cards: [
     { title: '分区保护', description: '为系统分区设置保护范围', icon: Lock },
-    { title: '维护模式', description: '在维护期间保留更新与软件安装', icon: Tools },
+    { title: '维护模式', description: '在维护期间保留更新与软件安装', icon: ToolboxIcon },
     { title: '保留空间', description: '为教学文件预留不参与还原的空间', icon: FolderOpened },
   ], items: ['保护范围', '维护计划', '还原策略'] },
 }
@@ -64,7 +65,7 @@ const tools = [
     </template>
 
     <template v-else>
-      <div class="tools-intro"><span class="tools-intro-icon"><el-icon :size="25"><Tools /></el-icon></span><div><h2>常用能力，随手可达</h2><p>设备维护、网络排查与课堂协作，集中在这里。</p></div><span class="tool-count">06 <small>项工具</small></span></div>
+      <div class="tools-intro"><span class="tools-intro-icon"><el-icon :size="25"><ToolboxIcon /></el-icon></span><div><h2>常用能力，随手可达</h2><p>设备维护、网络排查与课堂协作，集中在这里。</p></div><span class="tool-count">06 <small>项工具</small></span></div>
       <div class="feature-section-title"><h3>全部工具</h3><span>系统 · 网络 · 协作</span></div>
       <div class="tools-grid"><button v-for="tool in tools" :key="tool.title" class="tool-card" @click="selected = tool"><span class="tool-icon"><el-icon :size="25"><component :is="tool.icon" /></el-icon></span><span class="tool-copy"><strong>{{ tool.title }}</strong><small>{{ tool.description }}</small></span><span class="tool-category">{{ tool.category }}</span><el-icon class="tool-arrow" :size="14"><ArrowRight /></el-icon></button></div>
       <p class="tools-note">让维护更简单，让课堂更专注。</p>

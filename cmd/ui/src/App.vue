@@ -1,10 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { HomeFilled, InfoFilled, Setting, Monitor, Brush, RefreshLeft, Tools } from '@element-plus/icons-vue'
+import { HomeFilled, InfoFilled, Setting, Monitor, Brush, RefreshLeft } from '@element-plus/icons-vue'
 import StatusView from './views/StatusView.vue'
 import ShieldIcon from './components/ShieldIcon.vue'
 import PopupIcon from './components/PopupIcon.vue'
 import SoftwareIcon from './components/SoftwareIcon.vue'
+import ToolboxIcon from './components/ToolboxIcon.vue'
 import AboutView from './views/AboutView.vue'
 import FeatureView from './views/FeatureView.vue'
 import SettingsView from './views/SettingsView.vue'
@@ -20,7 +21,7 @@ const navItems = [
   { id: 'freeze', label: '还原', icon: RefreshLeft },
   { id: 'popup', label: '弹窗拦截', icon: PopupIcon },
   { id: 'software', label: '软件管理', icon: SoftwareIcon },
-  { id: 'tools', label: '工具箱', icon: Tools },
+  { id: 'tools', label: '工具箱', icon: ToolboxIcon },
 ]
 const pageMeta = computed(() => [...navItems, { id: 'about', label: '关于课佑' }, { id: 'settings', label: '设置' }].find((item) => item.id === page.value) || navItems[0])
 </script>
@@ -124,7 +125,10 @@ button { font: inherit; }
 .rail-nav, .rail-bottom { display: grid; width: 100%; gap: 2px; }
 .rail-nav { min-height: 0; overflow-y: auto; flex-shrink: 1; }
 .rail-bottom { flex-shrink: 0; margin-top: auto; padding-top: 10px; }
-.rail-item { position: relative; display: grid; place-items: center; gap: 5px; width: 100%; min-height: 46px; padding: 7px 0; border: 0; border-radius: 10px; background: transparent; color: var(--rail-text); cursor: pointer; font-size: 10px; transition: background .15s ease, color .15s ease; }
+.rail-item { position: relative; display: grid; grid-template-rows: 22px 12px; justify-items: center; align-content: center; gap: 4px; width: 100%; height: 48px; min-height: 48px; padding: 5px 0; border: 0; border-radius: 10px; background: transparent; color: var(--rail-text); cursor: pointer; font-size: 10px; transition: background .15s ease, color .15s ease; }
+.rail-item > .el-icon { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; font-size: 22px !important; }
+.rail-item > .el-icon svg { display: block; width: 22px; height: 22px; }
+.rail-item > span { line-height: 12px; }
 .rail-item:hover { background: var(--rail-hover); color: var(--rail-hover-text); }
 .rail-item.active { background: var(--rail-active); color: var(--accent); }
 .rail-item.active::before { position: absolute; left: 0; width: 3px; height: 30px; border-radius: 0 3px 3px 0; background: var(--accent); content: ''; }
