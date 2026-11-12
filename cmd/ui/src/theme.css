@@ -1,0 +1,52 @@
+:root {
+  --rail-bg: #1a1b1c; --rail-hover: #2a2b2c; --rail-active: #343536; --rail-text: #868783; --rail-hover-text: #dddeda;
+  --header-bg: #222324; --shell-line: #343536; --control-text: #b0b1af; --control-hover: #3a3b3c;
+  --card-bg: #262728; --card-hover: #2c2d2e; --card-line: #3c3d3e; --card-hover-line: #65615a;
+  --scroll-thumb: #555756; --scroll-hover: #777a77; --art-bg: #242526;
+  --feature-hero-amber: linear-gradient(115deg, #2c2924, #252626 72%);
+  --feature-hero-mint: linear-gradient(115deg, #252e2a, #252626 72%);
+  --feature-hero-blue: linear-gradient(115deg, #252d36, #252626 72%);
+  --tools-intro-bg: linear-gradient(110deg, #2d2b27, #262728);
+  --hero-amber-line: #454038; --hero-mint-line: #39473f; --hero-blue-line: #394451;
+  --feature-amber: #e3a24b; --feature-amber-rgb: 227, 162, 75;
+  --feature-mint: #7fc9ac; --feature-mint-rgb: 127, 201, 172;
+  --feature-blue: #88b6de; --feature-blue-rgb: 136, 182, 222;
+  --amber: #e3a24b; --amber-soft: rgba(227,162,75,.14);
+  --el-bg-color: var(--surface); --el-bg-color-overlay: var(--surface-raised); --el-bg-color-page: var(--canvas);
+  --el-text-color-primary: var(--ink); --el-text-color-regular: var(--ink-soft); --el-text-color-secondary: var(--slate);
+  --el-border-color: var(--line); --el-border-color-light: var(--line); --el-fill-color-blank: var(--surface); --el-fill-color-light: var(--surface-soft);
+}
+:root[data-theme='light'] {
+  --canvas: #f5f6f8; --surface: #ffffff; --surface-raised: #f0f2f5; --surface-soft: #f8f9fb;
+  --line: #e0e4e9; --ink: #252b34; --ink-soft: #48515e; --slate: #66717e; --muted: #78828e;
+  --accent: #b97720; --accent-deep: #a56513; --accent-soft: rgba(185,119,32,.1);
+  --ok: #278260; --ok-soft: rgba(39,130,96,.1); --danger: #be4a4a; --danger-soft: rgba(190,74,74,.1);
+  --warning: #a56513; --warning-soft: rgba(165,101,19,.1); --shadow: 0 8px 24px rgba(32,45,65,.06);
+  --rail-bg: #edf0f4; --rail-hover: #e5e9ef; --rail-active: #faecd5; --rail-text: #737d89; --rail-hover-text: #303a47;
+  --header-bg: #fafbfd; --shell-line: #e0e4e9; --control-text: #68727e; --control-hover: #e9edf2;
+  --card-bg: #ffffff; --card-hover: #f9fafc; --card-line: #e0e4e9; --card-hover-line: #c9ae85;
+  --scroll-thumb: #c2c8d0; --scroll-hover: #9ba5b1; --art-bg: #f2f4f7;
+  --feature-hero-amber: linear-gradient(115deg, #fff4e2, #fffdfa 80%);
+  --feature-hero-mint: linear-gradient(115deg, #eaf6f0, #fbfdfc 80%);
+  --feature-hero-blue: linear-gradient(115deg, #eaf2fc, #fbfcfe 80%);
+  --tools-intro-bg: linear-gradient(110deg, #fff4e2, #ffffff);
+  --hero-amber-line: #ead9bd; --hero-mint-line: #cfe3d8; --hero-blue-line: #d0deef;
+  --feature-amber: #b97720; --feature-amber-rgb: 185,119,32;
+  --feature-mint: #368762; --feature-mint-rgb: 54,135,98;
+  --feature-blue: #487eae; --feature-blue-rgb: 72,126,174;
+  --amber: #a56513; --amber-soft: rgba(165,101,19,.1);
+  --el-color-primary: #b97720;
+}
+:root[data-theme='light'] .feature-primary { color: #fff; }
+:root[data-theme='light'] .rail-brand { background: #e6a345; color: #34281a; }
+:root[data-theme='light'] .feature-art { opacity: .85; }
+:root[data-theme='light'] .feature-preview-dialog { --el-dialog-bg-color: var(--surface); --el-text-color-primary: var(--ink); --el-text-color-regular: var(--slate); border-color: var(--line); }
+:root[data-theme='light'] .hero-status-badge { background: rgba(255,255,255,.92); }
+:root[data-theme='light'] .circuit-art path[fill='#242628'] { fill: #eef1f5; }
+:root[data-theme='light'] .circuit-art path[fill='#2f3132'] { fill: #fff7e9; }
+:root[data-theme='light'] .circuit-art g[fill='#343638'] { fill: #e9edf2; }
+:root[data-theme='light'] .service-strip { background: var(--surface); }
+:root[data-theme='light'] .tile-icon { border-color: #ddc6a5; }
+:root[data-theme='light'] .quick-summary small, :root[data-theme='light'] .workspace-footer { color: var(--muted); }
+:root[data-theme='light'] .tool-icon { color: var(--accent); }
+:root[data-theme='light'] .tool-category { color: var(--muted); }

@@ -5,6 +5,7 @@ import StatusView from './views/StatusView.vue'
 import ShieldIcon from './components/ShieldIcon.vue'
 import AboutView from './views/AboutView.vue'
 import FeatureView from './views/FeatureView.vue'
+import SettingsView from './views/SettingsView.vue'
 
 function minimizeWindow() { return window.ocm.minimizeWindow() }
 function closeWindow() { return window.ocm.closeWindow() }
@@ -18,7 +19,7 @@ const navItems = [
   { id: 'popup', label: '弹窗拦截', icon: MuteNotification },
   { id: 'tools', label: '工具箱', icon: Tools },
 ]
-const pageMeta = computed(() => [...navItems, { id: 'about', label: '关于课佑' }].find((item) => item.id === page.value) || navItems[0])
+const pageMeta = computed(() => [...navItems, { id: 'about', label: '关于课佑' }, { id: 'settings', label: '设置' }].find((item) => item.id === page.value) || navItems[0])
 </script>
 
 <template>
@@ -40,7 +41,7 @@ const pageMeta = computed(() => [...navItems, { id: 'about', label: '关于课�
       </nav>
       <div class="rail-bottom">
         <button type="button" class="rail-item" :class="{ active: page === 'about' }" title="关于课佑" @click="page = 'about'"><el-icon :size="20"><InfoFilled /></el-icon><span>关于</span></button>
-        <button type="button" class="rail-item" title="设置"><el-icon :size="21"><Setting /></el-icon><span>设置</span></button>
+        <button type="button" class="rail-item" :class="{ active: page === 'settings' }" title="设置" @click="page = 'settings'"><el-icon :size="21"><Setting /></el-icon><span>设置</span></button>
       </div>
     </aside>
 
@@ -61,9 +62,9 @@ const pageMeta = computed(() => [...navItems, { id: 'about', label: '关于课�
         </div>
       </header>
 
-      <main class="workspace-body">
+      <main :key="page" class="workspace-body">
         <StatusView v-if="page === 'home'" @navigate="page = $event" />
-        <AboutView v-else-if="page === 'about'" /><FeatureView v-else :key="page" :page="page" />
+        <SettingsView v-else-if="page === 'settings'" @navigate="page = $event" /><AboutView v-else-if="page === 'about'" /><FeatureView v-else :key="page" :page="page" />
       </main>
 
       <footer class="workspace-footer">
@@ -78,7 +79,7 @@ const pageMeta = computed(() => [...navItems, { id: 'about', label: '关于课�
   --canvas: #202122;
   --surface: #28292a;
   --surface-raised: #303132;
-  --surface-soft: #242526;
+  --surface-soft: var(--art-bg);
   --line: #3b3c3d;
   --ink: #f1f1ef;
   --ink-soft: #d1d2d0;
@@ -102,30 +103,30 @@ const pageMeta = computed(() => [...navItems, { id: 'about', label: '关于课�
 * { box-sizing: border-box; }
 *::-webkit-scrollbar { width: 4px; height: 4px; background: transparent; }
 *::-webkit-scrollbar-track { background: transparent; margin-block: 10px; }
-*::-webkit-scrollbar-thumb { border-radius: 4px; background: #555756; }
-*::-webkit-scrollbar-thumb:hover { background: #777a77; }
+*::-webkit-scrollbar-thumb { border-radius: 4px; background: var(--scroll-thumb); }
+*::-webkit-scrollbar-thumb:hover { background: var(--scroll-hover); }
 *::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
 *::-webkit-scrollbar-corner { background: transparent; }
 .el-scrollbar__bar.is-vertical { width: 4px; }
 .el-scrollbar__bar.is-horizontal { height: 4px; }
-.el-scrollbar__thumb { background-color: #777a77; }
+.el-scrollbar__thumb { background-color: var(--scroll-hover); }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--canvas); color: var(--ink); font-family: 'Microsoft YaHei UI', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 button { font: inherit; }
 #app { height: 100vh; }
 .app-shell { display: flex; height: 100%; min-width: 0; background: var(--canvas); }
 
-.rail { display: flex; width: 76px; flex: 0 0 76px; flex-direction: column; align-items: center; padding: 17px 8px 12px; border-right: 1px solid #343536; background: #1a1b1c; }
+.rail { display: flex; width: 76px; flex: 0 0 76px; flex-direction: column; align-items: center; padding: 17px 8px 12px; border-right: 1px solid var(--shell-line); background: var(--rail-bg); }
 .rail-brand { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 17px; border-radius: 12px; background: var(--accent); color: #2a2118; box-shadow: 0 5px 16px rgba(227, 162, 75, .18); }
 .rail-brand svg { width: 32px; height: 32px; }
 .rail-nav, .rail-bottom { display: grid; width: 100%; gap: 4px; }
 .rail-bottom { margin-top: auto; padding-top: 10px; }
-.rail-item { position: relative; display: grid; place-items: center; gap: 5px; width: 100%; min-height: 50px; padding: 7px 0; border: 0; border-radius: 10px; background: transparent; color: #868783; cursor: pointer; font-size: 10px; transition: background .15s ease, color .15s ease; }
-.rail-item:hover { background: #2a2b2c; color: #dddeda; }
-.rail-item.active { background: #343536; color: var(--accent); }
+.rail-item { position: relative; display: grid; place-items: center; gap: 5px; width: 100%; min-height: 50px; padding: 7px 0; border: 0; border-radius: 10px; background: transparent; color: var(--rail-text); cursor: pointer; font-size: 10px; transition: background .15s ease, color .15s ease; }
+.rail-item:hover { background: var(--rail-hover); color: var(--rail-hover-text); }
+.rail-item.active { background: var(--rail-active); color: var(--accent); }
 .rail-item.active::before { position: absolute; left: 0; width: 3px; height: 30px; border-radius: 0 3px 3px 0; background: var(--accent); content: ''; }
 
 .workspace { display: flex; min-width: 0; flex: 1; flex-direction: column; background: var(--canvas); }
-.topbar { display: flex; align-items: center; justify-content: space-between; height: 40px; flex: 0 0 40px; padding: 0 0 0 26px; border-bottom: 1px solid #343536; background: #222324; -webkit-app-region: drag; }
+.topbar { display: flex; align-items: center; justify-content: space-between; height: 40px; flex: 0 0 40px; padding: 0 0 0 26px; border-bottom: 1px solid var(--shell-line); background: var(--header-bg); -webkit-app-region: drag; }
 .topbar-title, .topbar-actions, .protected-chip, .topbar-device { display: flex; align-items: center; }
 .topbar-title { gap: 9px; color: var(--muted); font-size: 12px; }
 .topbar-title strong { color: var(--ink); font-size: 13px; }
@@ -136,10 +137,10 @@ button { font: inherit; }
 .topbar-device { gap: 5px; font-size: 10px; }
 .window-controls { position: relative; display: flex; align-self: stretch; margin-left: 4px; padding-left: 8px; }
 .window-controls::before { position: absolute; left: 0; top: 50%; width: 1px; height: 18px; background: var(--line); transform: translateY(-50%); content: ''; }
-.window-action { display: grid; place-items: center; width: 46px; height: 100%; padding: 0; border: 0; background: transparent; color: #b0b1af; cursor: pointer; -webkit-app-region: no-drag; }
+.window-action { display: grid; place-items: center; width: 46px; height: 100%; padding: 0; border: 0; background: transparent; color: var(--control-text); cursor: pointer; -webkit-app-region: no-drag; }
 .window-action svg { display: block; width: 12px; height: 12px; stroke: currentColor; stroke-width: 1; }
 .window-action:focus-visible { outline: 1px solid var(--accent); outline-offset: -4px; }
-.window-action:hover { background: #3a3b3c; color: var(--ink); }
+.window-action:hover { background: var(--control-hover); color: var(--ink); }
 .window-action.close:hover { background: #b83d3d; color: #fff; }
 .workspace-body { min-height: 0; flex: 1; overflow: auto; padding: 28px 44px 22px; }
 .workspace-footer { display: flex; align-items: center; gap: 9px; min-height: 34px; padding: 0 42px 12px; color: #70716f; font-family: 'Segoe UI', sans-serif; font-size: 9px; }
