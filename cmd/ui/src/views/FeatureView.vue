@@ -1,11 +1,18 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { CircleCheck, Brush, Tools, Search, FolderOpened, Monitor, Connection, Cpu, RefreshLeft, Lock, Box, ArrowRight, Clock, DocumentChecked } from '@element-plus/icons-vue'
+import { MuteNotification, Brush, Tools, Search, FolderOpened, Monitor, Connection, Cpu, RefreshLeft, Lock, Box, ArrowRight, Clock, DocumentChecked } from '@element-plus/icons-vue'
+
+import ShieldIcon from '../components/ShieldIcon.vue'
 
 const props = defineProps({ page: { type: String, required: true } })
 const selected = ref(null)
 const sections = {
-  antivirus: { eyebrow: '设备安全', title: '让每一次开机，都更安心', description: '检查可疑文件与潜在威胁，让课堂设备保持可靠。', label: '病毒查杀', action: '快速查杀', icon: CircleCheck, tone: 'amber', note: '优先检查系统关键位置与常用程序', cards: [
+  popup: { eyebrow: '专注课堂', title: '少一些打扰，多一份专注', description: '管理不必要的弹窗与干扰，让课堂画面保持干净。', label: '弹窗拦截', action: '设置拦截', icon: MuteNotification, tone: 'amber', note: '按需设置规则，并为需要的应用保留白名单', cards: [
+    { title: '拦截规则', description: '管理需要拦截的弹窗与应用', icon: MuteNotification },
+    { title: '应用白名单', description: '允许教学应用正常显示通知', icon: DocumentChecked },
+    { title: '拦截记录', description: '查看最近的弹窗拦截情况', icon: Clock },
+  ], items: ['规则管理', '应用白名单', '拦截记录'] },
+  antivirus: { eyebrow: '设备安全', title: '让每一次开机，都更安心', description: '检查可疑文件与潜在威胁，让课堂设备保持可靠。', label: '病毒查杀', action: '快速查杀', icon: ShieldIcon, tone: 'amber', note: '优先检查系统关键位置与常用程序', cards: [
     { title: '全盘查杀', description: '全面检查所有磁盘中的文件', icon: Search },
     { title: '自定义查杀', description: '选择需要检查的文件或文件夹', icon: FolderOpened },
     { title: '隔离区', description: '集中查看和管理隔离的可疑文件', icon: Lock },
@@ -15,7 +22,7 @@ const sections = {
     { title: '应用缓存', description: '整理应用运行中积累的缓存', icon: FolderOpened },
     { title: '清理记录', description: '每次清理的内容都有迹可循', icon: Clock },
   ], items: ['临时文件', '应用缓存', '回收站'] },
-  freeze: { eyebrow: '环境还原', title: '熟悉的课堂环境，始终如初', description: '规划系统保护与还原，让公共设备在下次开机时回到熟悉的状态。', label: '冰点还原', action: '设置保护', icon: RefreshLeft, tone: 'blue', note: '选择保护分区，安排维护与还原策略', cards: [
+  freeze: { eyebrow: '环境还原', title: '熟悉的课堂环境，始终如初', description: '规划系统保护与还原，让公共设备在下次开机时回到熟悉的状态。', label: '系统还原', action: '设置保护', icon: RefreshLeft, tone: 'blue', note: '选择保护分区，安排维护与还原策略', cards: [
     { title: '分区保护', description: '为系统分区设置保护范围', icon: Lock },
     { title: '维护模式', description: '在维护期间保留更新与软件安装', icon: Tools },
     { title: '保留空间', description: '为教学文件预留不参与还原的空间', icon: FolderOpened },
@@ -27,7 +34,7 @@ const tools = [
   { title: '网络诊断', description: '检查连接与网络状态', icon: Connection, category: '网络' },
   { title: '远程桌面', description: '连接和协助校园内的设备', icon: Monitor, category: '协作' },
   { title: '远程唤醒', description: '唤醒同一网络中的终端', icon: Clock, category: '网络' },
-  { title: '弹窗管理', description: '整理拦截规则与白名单', icon: Box, category: '系统' },
+  { title: '启动管理', description: '查看开机启动项与启动顺序', icon: Box, category: '系统' },
   { title: '设备审计', description: '查看设备与系统信息', icon: DocumentChecked, category: '系统' },
 ]
 </script>
@@ -42,7 +49,7 @@ const tools = [
     <template v-if="section">
       <div class="feature-hero" :class="section.tone">
         <div class="feature-copy"><h2>{{ section.title }}</h2><p>{{ section.description }}</p><button class="feature-primary" @click="selected = { title: section.action, description: section.note }"><el-icon :size="17"><component :is="section.icon" /></el-icon>{{ section.action }}<el-icon :size="14"><ArrowRight /></el-icon></button><small>{{ section.note }}</small></div>
-        <div class="feature-art" aria-hidden="true"><span class="orbit orbit-one"></span><span class="orbit orbit-two"></span><span class="art-dot"></span><div class="art-core"><svg v-if="page === 'freeze'" viewBox="0 0 64 64" fill="none"><path d="M32 7v50M10.3 19.5l43.4 25M10.3 44.5l43.4-25M24 13l8 8 8-8M24 51l8-8 8 8M12 29l11-3-3-11M52 35l-11 3 3 11M12 35l11 3-3 11M52 29l-11-3 3-11" /></svg><el-icon v-else :size="72"><component :is="section.icon" /></el-icon></div></div>
+        <div class="feature-art" aria-hidden="true"><span class="orbit orbit-one"></span><span class="orbit orbit-two"></span><span class="art-dot"></span><div class="art-core"><el-icon :size="72"><component :is="section.icon" /></el-icon></div></div>
       </div>
       <div class="feature-section-title"><h3>常用功能</h3><span>按需管理，更有条理</span></div>
       <div class="feature-cards"><button v-for="card in section.cards" :key="card.title" class="feature-card" @click="selected = card"><span class="feature-card-icon" :class="section.tone"><el-icon :size="23"><component :is="card.icon" /></el-icon></span><strong>{{ card.title }}</strong><p>{{ card.description }}</p><el-icon class="card-arrow" :size="13"><ArrowRight /></el-icon></button></div>

@@ -59,8 +59,14 @@ $controlRects = foreach ($name in @('最小化', '关闭')) {
 if ($controlRects[0].Y -ne $controlRects[1].Y -or $controlRects[0].Height -ne $controlRects[1].Height -or $controlRects[0].Width -ne $controlRects[1].Width) { throw 'Window controls are not aligned' }
 Write-Output 'PASS: window controls share the same size and vertical position'
 Assert-Text '三层防护链路'
-Click-Button '安全日志'
-Assert-Text '运行日志'
+Click-Button '杀毒'
+Assert-Text '病毒查杀'
+Click-Button '还原'
+Assert-Text '系统还原'
+Click-Button '弹窗拦截'
+Assert-Text '拦截规则'
+Click-Button '工具箱'
+Assert-Text '全部工具'
 Click-Button '关于课佑'
 Assert-Text ([Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $InstallRoot 'ClassAegisService.exe')).ProductVersion)
 Click-Button '首页'

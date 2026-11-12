@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { CircleCheckFilled, CircleCloseFilled, Connection, Document, FolderOpened, Monitor, Refresh, WarningFilled } from '@element-plus/icons-vue'
 
-const emit = defineEmits(['open-logs-view'])
+const emit = defineEmits(['navigate'])
 const status = ref(null)
 const error = ref('')
 const loaded = ref(false)
@@ -34,8 +34,8 @@ const phase = computed(() => {
 const state = computed(() => ({
   loading: { tone: 'loading', label: '正在读取运行状态', description: '正在连接本机核心进程。', icon: Refresh },
   ok: { tone: 'ok', label: '课佑正在保护您的设备', description: '核心进程、连接通道和业务能力均已就绪。', icon: CircleCheckFilled },
-  partial: { tone: 'warning', label: '课佑正在建立保护', description: '有服务还未就绪，请稍后重试或查看安全日志。', icon: WarningFilled },
-  offline: { tone: 'danger', label: '核心进程不可达', description: '请确认课佑管家已启动，或查看安全日志定位问题。', icon: CircleCloseFilled },
+  partial: { tone: 'warning', label: '课佑正在建立保护', description: '有服务还未就绪，请稍后重试或检查运行配置。', icon: WarningFilled },
+  offline: { tone: 'danger', label: '核心进程不可达', description: '请确认课佑管家已启动，并检查运行配置。', icon: CircleCloseFilled },
 })[phase.value])
 
 const protectedDays = computed(() => (phase.value === 'ok' ? 1 : 0))
@@ -70,7 +70,7 @@ async function selfCheck() {
   else if (phase.value === 'partial') ElMessage.warning('检查完成，存在异常状态')
   else ElMessage.error('检查失败，核心进程不可达')
 }
-async function openLogs() { await window.ocm.openLogs() }
+
 </script>
 
 <template>
@@ -83,7 +83,6 @@ async function openLogs() { await window.ocm.openLogs() }
       </div>
       <div class="hero-actions">
         <button type="button" class="scan-button" :disabled="checking" @click="selfCheck"><el-icon :class="{ spinning: checking }"><Refresh /></el-icon>{{ checking ? '检查中' : '立即检查' }}</button>
-        <button type="button" class="scan-more" title="查看安全日志" @click="emit('open-logs-view')">⌄</button>
       </div>
     </section>
 
@@ -105,8 +104,8 @@ async function openLogs() { await window.ocm.openLogs() }
 
     <section class="quick-grid" aria-label="快捷入口">
       <button type="button" class="quick-tile" @click="selfCheck"><span class="tile-icon"><el-icon><Refresh /></el-icon></span><span><strong>立即检查</strong><small>刷新本机防护状态</small></span></button>
-      <button type="button" class="quick-tile" @click="emit('open-logs-view')"><span class="tile-icon"><el-icon><Document /></el-icon></span><span><strong>安全日志</strong><small>查看核心与能力记录</small></span></button>
-      <button type="button" class="quick-tile" @click="openLogs"><span class="tile-icon"><el-icon><FolderOpened /></el-icon></span><span><strong>打开日志目录</strong><small>在资源管理器中查看</small></span></button>
+      <button type="button" class="quick-tile" @click="emit('navigate', 'antivirus')"><span class="tile-icon"><el-icon><Document /></el-icon></span><span><strong>病毒查杀</strong><small>检查文件与潜在威胁</small></span></button>
+      <button type="button" class="quick-tile" @click="emit('navigate', 'tools')"><span class="tile-icon"><el-icon><FolderOpened /></el-icon></span><span><strong>工具箱</strong><small>打开常用维护工具</small></span></button>
       <div class="quick-summary"><span>上次检查</span><strong>{{ checkedLabel }}</strong><small>{{ status?.sn || '设备信息待读取' }}</small></div>
     </section>
 
@@ -125,12 +124,11 @@ async function openLogs() { await window.ocm.openLogs() }
 .hero-heading h1 { margin: 11px 0 8px; color: var(--ink); font-size: 28px; line-height: 1.2; font-weight: 600; letter-spacing: 0; }
 .hero-heading p { margin: 0; color: var(--slate); font-size: 12px; }
 .hero-actions { display: flex; align-items: stretch; }
-.scan-button, .scan-more { border: 0; background: var(--accent); color: #2d2419; cursor: pointer; font-size: 15px; }
+.scan-button { border: 0; background: var(--accent); color: #2d2419; cursor: pointer; font-size: 15px; }
 .scan-button { display: inline-flex; align-items: center; gap: 9px; min-width: 145px; min-height: 42px; padding: 0 19px; font-weight: 700; }
-.scan-button { border-radius: 8px 0 0 8px; }
+.scan-button { border-radius: 8px; }
 .scan-button:hover:not(:disabled) { background: #edb15d; }
 .scan-button:disabled { cursor: wait; opacity: .65; }
-.scan-more { width: 34px; border-left: 1px solid rgba(45, 36, 25, .25); border-radius: 0 8px 8px 0; font-family: 'Segoe UI', sans-serif; font-size: 21px; }
 .hero-visual { position: relative; min-height: 286px; margin-top: 16px; overflow: hidden; border: 1px solid #3c3d3e; border-radius: 12px; background: #242526; }
 .circuit-art { display: block; width: 100%; height: 286px; }
 .hero-status-badge { position: absolute; right: 12px; bottom: 11px; display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid #4a4b4c; background: rgba(32, 33, 34, .88); color: var(--slate); font-size: 10px; }
