@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // Package netops implements the delegated network operations that core
 // executes on behalf of the ability process: Wake-on-LAN magic packets,
 // ICMP+ARP subnet discovery, and ARP table snapshots. Pure-Go logic here;

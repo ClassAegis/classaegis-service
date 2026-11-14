@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-only
 ﻿param([string]$InstallRoot = 'D:\ClassAegisService')
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName UIAutomationClient

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 package platform
 
 // Platform abstracts OS-specific device control so the command pipeline stays

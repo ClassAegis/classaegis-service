@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # 进程加速/逐进程流量统计/限速(ability · proc)设计文档
 
 | 项 | 值 |

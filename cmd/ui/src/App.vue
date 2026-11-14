@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 <script setup>
 import { computed, ref } from 'vue'
 import { HomeFilled, InfoFilled, Setting, Monitor, Brush, RefreshLeft } from '@element-plus/icons-vue'

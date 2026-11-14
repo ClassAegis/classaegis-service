@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 <script setup>
 import { onMounted, ref } from 'vue'
 import { preferences, setPreference, resetPreferences, preferenceError } from '../preferences'

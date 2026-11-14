@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 <template>
   <svg class="product-feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <rect x="3" y="3" width="7" height="6" rx="1" /><rect x="14" y="3" width="7" height="11" rx="1" /><rect x="3" y="13" width="7" height="8" rx="1" /><rect x="14" y="18" width="7" height="3" rx="1" />

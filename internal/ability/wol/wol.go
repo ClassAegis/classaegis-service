@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // Package wol implements the LAN wake/discovery ability (局域网唤醒/发现):
 // WOL magic packets, subnet discovery and ARP snapshots. The process is
 // loopback-only — network operations are delegated to core via the

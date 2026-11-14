@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-only
 $ErrorActionPreference = 'Stop'
 $uiRoot = Split-Path -Parent $PSScriptRoot
 $repoRoot = Resolve-Path (Join-Path $uiRoot '..\..')
@@ -26,6 +27,13 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Build failed: $($target.Name)" }
   }
   Copy-Item (Join-Path $repoRoot 'conf\config.example.toml') (Join-Path $confRoot 'config.example.toml')
+
+  $licenseRoot = Join-Path $stageRoot 'licenses'
+  $docsRoot = Join-Path $stageRoot 'docs'
+  New-Item -ItemType Directory -Force $licenseRoot, $docsRoot | Out-Null
+  Copy-Item (Join-Path $repoRoot 'LICENSE') (Join-Path $licenseRoot 'ClassAegis-LICENSE.txt')
+  foreach ($name in @('AGPL-3.0-ONLY.txt','COPYRIGHT')) { Copy-Item (Join-Path $repoRoot $name) $licenseRoot }
+  foreach ($name in @('SECURITY.md','CONTRIBUTING.md','CODE_OF_CONDUCT.md')) { Copy-Item (Join-Path $repoRoot $name) $docsRoot }
 
   $requiredFiles = @(
     'ClassAegisCore.exe',

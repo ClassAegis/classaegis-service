@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // launcher is the ClassAegis agent guardian (课佑管家启动器/守护者).
 // Desktop shortcut target. Starts ability + core, watches them, restarts on
 // crash with exponential backoff. Future Windows-service host (M1).

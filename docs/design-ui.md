@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # 课佑管家桌面 UI
 
 ## 产品定位

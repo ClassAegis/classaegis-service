@@ -1,8 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-only
 [package]
 name = "classaegis-service"
 version = "0.1.2"
 description = "ClassAegisService desktop service"
 authors = ["ClassAegis"]
+license = "AGPL-3.0-only"
 edition = "2021"
 
 [[bin]]

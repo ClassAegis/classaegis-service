@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # 桌面界面对接说明
 
 ## 当前入口

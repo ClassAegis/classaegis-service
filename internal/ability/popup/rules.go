@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // Package popup implements the popup/ad blocking ability (弹窗/广告拦截):
 // top-level window interception driven by process/title/class rules, an
 // event buffer for cloud aggregation, and rule updates from the server.

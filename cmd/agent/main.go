@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // agent is the all-in-one debug mode: core + ability in a single process.
 // Handy for quick local testing; production runs cmd/core + cmd/ability.
 package main

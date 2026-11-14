@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // core is the core process of ClassAegis agent (课佑管家).
 // It is the ONLY component with external network access:
 // MQTT to the intranet server, loopback IPC to the ability process and ui.

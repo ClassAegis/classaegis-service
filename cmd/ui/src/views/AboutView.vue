@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 <script setup>
 import { onMounted, ref } from 'vue'
 import { Connection, Document, InfoFilled, Monitor } from '@element-plus/icons-vue'
@@ -36,7 +37,7 @@ onMounted(async () => {
         <dl class="info-list">
           <div><dt>应用版本</dt><dd>{{ info.version || '—' }}</dd></div>
           <div><dt>协议版本</dt><dd>{{ info.protocol ? `v${info.protocol}` : '—' }}</dd></div>
-          <div><dt>授权协议</dt><dd>Apache License 2.0</dd></div>
+          <div><dt>授权协议</dt><dd>GNU AGPL-3.0-only</dd></div>
         </dl>
       </div>
 

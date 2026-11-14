@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
 :root {
   --rail-bg: #1a1b1c; --rail-hover: #2a2b2c; --rail-active: #343536; --rail-text: #868783; --rail-hover-text: #dddeda;
   --header-bg: #222324; --shell-line: #343536; --control-text: #b0b1af; --control-hover: #3a3b3c;

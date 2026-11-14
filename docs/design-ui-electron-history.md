@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # 课佑管家桌面 UI 的 Electron 阶段历史设计记录
 
 | 项 | 值 |

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // Package clean implements the junk cleanup ability (垃圾清理/目录扫描):
 // category-based directory scanning, size accounting, and safe deletion
 // with an admin-confirmed two-phase flow (scan first, run deletes).

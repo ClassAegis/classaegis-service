@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // Package audit implements the web behavior audit ability (上网行为审计):
 // browser history / downloads / cache-entry reading from local browser
 // databases. ESE (WebCacheV01.dat, IE/legacy Edge) via esent.dll on a

@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # 弹窗/广告拦截(ability · popup)设计文档
 
 | 项 | 值 |

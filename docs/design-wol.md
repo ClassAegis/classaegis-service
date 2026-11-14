@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # 局域网唤醒/发现(ability · wol)设计文档
 
 | 项 | 值 |

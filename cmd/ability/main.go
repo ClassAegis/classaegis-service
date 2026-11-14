@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // ability is the business capability process of ClassAegis agent (课佑管家).
 // It hosts capability modules and executes verified commands forwarded by
 // core over loopback HTTP. Loopback-only: NO external network access.

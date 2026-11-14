@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 fn main() {
     // A Windows drive path can deserialize as a URL, which disables asset embedding.
     // Refuse release packages that would depend on the build machine at runtime.

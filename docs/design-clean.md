@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # 垃圾清理/目录扫描(ability · clean)设计文档
 
 | 项 | 值 |

@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 <script setup>
 import { computed, ref } from 'vue'
 import { Brush, Search, FolderOpened, Monitor, Connection, Cpu, RefreshLeft, Lock, Box, ArrowRight, Clock, DocumentChecked } from '@element-plus/icons-vue'

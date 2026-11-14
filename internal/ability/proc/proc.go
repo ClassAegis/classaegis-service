@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // Package proc implements the process acceleration and per-process traffic
 // ability (进程加速/逐进程流量统计/限速): working-set trimming, priority
 // adjustment, TCP-estats-based traffic accounting, and experimental

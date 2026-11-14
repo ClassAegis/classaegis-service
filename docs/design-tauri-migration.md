@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # 课佑管家 Tauri 迁移方案
 
 ## 结论

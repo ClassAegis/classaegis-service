@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # ClassAegisService · 课佑管家
 
 被控端程序：**Go 编写，Windows 10/11 优先**(Linux/UOS/麒麟为后续里程碑，platform 适配接口已预留)。协议契约见 docs 仓协议规范 v0.1。
@@ -57,3 +58,8 @@
 - Go 1.23；构建:`go build ./...`;测试:`go test ./...`
 - 联调:`cmd/ocmctl` + EMQX Windows 免安装版
 - Service 安装包:`cmd/ui` 下执行 `npm run dist`，使用 Tauri NSIS 安装向导。安装包会同时包含 `bin` 下的 Core、Ability、Launcher、Ctl、Debug 和 `conf` 配置样例。
+
+
+## 许可证与社区规则
+
+本项目原创代码与文档采用 [AGPL-3.0-only](LICENSE)。第三方材料保留原许可。参见 [安全策略](SECURITY.md)、[贡献指南](CONTRIBUTING.md) 和 [行为准则](CODE_OF_CONDUCT.md)。

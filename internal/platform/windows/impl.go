@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 //go:build windows
 
 // Package windows implements the platform adapter for Windows 10/11.

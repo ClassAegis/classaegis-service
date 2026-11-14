@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // Package ipc defines the loopback contract between core and the ability
 // process. Loopback-only, token-authed; the core process is the only
 // component with external network access.

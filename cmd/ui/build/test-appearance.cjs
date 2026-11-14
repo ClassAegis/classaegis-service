@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 const fs = require('fs');
 const http = require('http');
 const path = require('path');

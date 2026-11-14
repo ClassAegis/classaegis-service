@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # RTMP/RTP Stream Playback
 
 Ability owns the `STREAM_START`, `STREAM_STOP`, and `STREAM_STATUS` commands.

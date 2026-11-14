@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # 上网行为审计(ability · audit)设计文档
 
 | 项 | 值 |

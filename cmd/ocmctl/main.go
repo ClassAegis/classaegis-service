@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // ocmctl is a debug tool that signs and publishes commands to a device,
 // and can listen for receipts. It stands in for the not-yet-built server.
 package main

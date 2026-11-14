@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # 课佑管家(被控端)M0 设计文档 — Go / Windows
 
 | 项 | 值 |

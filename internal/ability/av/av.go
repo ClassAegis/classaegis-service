@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // Package av implements the local antivirus engine ability (本地杀毒引擎):
 // hash + pattern signature scanning of local files, double-extension
 // heuristics, a quarantine store, and throttled progress reporting. The

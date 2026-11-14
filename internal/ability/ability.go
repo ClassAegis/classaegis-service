@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // Package ability hosts the business capability modules (能力模块) of
 // 课佑管家. The ability process listens on loopback only and executes
 // verified commands forwarded by core; it has NO external network access

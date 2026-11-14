@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # Windows 安装版启动修复与验证（0.1.1）
 
 2026-11-12 在 `D:\ClassAegisService` 的真实安装版复现了 `ERR_FILE_NOT_FOUND`。

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 import { ref } from 'vue'
 
 export const preferenceDefaults = Object.freeze({ refreshInterval: 10, showCheckupMessages: true, maskDeviceId: false })

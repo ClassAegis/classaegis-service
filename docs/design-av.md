@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # 本地杀毒引擎(ability · av)设计文档
 
 | 项 | 值 |
